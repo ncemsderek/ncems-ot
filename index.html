@@ -352,7 +352,14 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
   </div>
   <!-- ADMIN -->
   <div id="tab-admin" class="section">
-    <div class="locked-msg" id="admin-locked" style="display:none"><i class="ti ti-lock"></i>Officer login required</div>
+    <div class="locked-msg" id="admin-locked" style="display:none">
+  <i class="ti ti-lock"></i>Officer login required
+  <div style="margin-top:1.5rem">
+    <button class="sub-tab" onclick="showSubTab('about',event)" style="display:inline-flex">
+      <i class="ti ti-info-circle"></i> About
+    </button>
+  </div>
+</div>
     <div id="admin-content" style="display:none">
       <div class="sub-tab-bar">
         <button class="sub-tab active" onclick="showSubTab('personnel',event)"><i class="ti ti-users"></i> Personnel</button>
@@ -413,7 +420,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
           <div class="about-row"><span class="about-rl">Year</span><span class="about-rv">2026</span></div>
           <div class="about-row"><span class="about-rl">Organization</span><span class="about-rv">North Country EMS</span></div>
           <div class="about-row"><span class="about-rl">Platform</span><span class="about-rv">Web / PWA</span></div>
-          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Built with Claude AI · Anthropic</div>
+          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 1.1 · 2026 · North Country EMS</div>
         </div>
       </div>
       <div style="margin-top:1rem"><button class="btn btn-primary" onclick="saveAdmin()"><i class="ti ti-check"></i> Save all changes</button></div>
