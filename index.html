@@ -445,7 +445,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
           <div class="about-row"><span class="about-rl">Year</span><span class="about-rv">2026</span></div>
           <div class="about-row"><span class="about-rl">Organization</span><span class="about-rv">North Country EMS</span></div>
           <div class="about-row"><span class="about-rl">Platform</span><span class="about-rv">Web / PWA</span></div>
-          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 2.1 · 2026 · North Country EMS</div>
+          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 2.2 · 2026 · North Country EMS</div>
         </div>
       </div>
       <div style="margin-top:1rem"><button class="btn btn-primary" onclick="saveAdmin()"><i class="ti ti-check"></i> Save all changes</button></div>
@@ -540,6 +540,9 @@ const fmtTime=ts=>new Date(ts).toLocaleTimeString('en-US',{hour:'numeric',minute
 const fmtTs=ts=>new Date(ts).toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
 const fmtCountdown=ms=>{if(ms<=0)return'Expired';const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);return`${m}:${String(s).padStart(2,'0')}`;};
 const midnight=()=>{const d=new Date();d.setHours(23,59,59,999);return d.getTime();};
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const jstr=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+let savePending=false,logSavePending=false;
 const hasPassed=e=>e.recentPassExpiry&&Date.now()<e.recentPassExpiry;
 const hasAccepted=e=>e.recentAcceptExpiry&&Date.now()<e.recentAcceptExpiry;
 const isShort=()=>currentList==='short';
@@ -561,12 +564,15 @@ function showStatus(msg,type,dur=0){const b=document.getElementById('status-bar'
 
 // JSONBIN
 async function fetchBin(id){const r=await fetch(binUrl(id)+'/latest',{headers:{'X-Master-Key':API_KEY}});if(!r.ok)throw new Error(r.status);return(await r.json()).record;}
-async function putBin(id,data){const r=await fetch(binUrl(id),{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify(data)});if(!r.ok)throw new Error(r.status);}
-async function saveActiveList(){showStatus('Saving...','saving');try{const s={...L()};delete s.log;await putBin(activeBin(),s);lastUpdated=new Date();updateLastUpdated();showStatus('Saved','success',1500);}catch(e){showStatus('Save failed — tap Refresh','error',4000);}}
-async function saveActiveLog(){try{await putBin(activeLogBin(),{log:LL()});}catch(e){showStatus('Log save failed','error',3000);}}
+async function putBin(id,data,ka){const r=await fetch(binUrl(id),{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify(data),keepalive:!!ka});if(!r.ok)throw new Error(r.status);}
+async function saveActiveList(ka){showStatus('Saving...','saving');try{const s={...L()};delete s.log;await putBin(activeBin(),s,ka);lastUpdated=new Date();updateLastUpdated();showStatus('Saved','success',1500);}catch(e){showStatus('Save failed — tap Refresh','error',4000);}}
+async function saveActiveLog(ka){try{const lg=LL();if(lg.length>300)lg.splice(0,lg.length-300);await putBin(activeLogBin(),{log:lg},ka);}catch(e){showStatus('Log save failed','error',3000);}}
 async function saveShared(){longData.supervisors=shared.supervisors;longData.shifts=shared.shifts;longData.passReasons=shared.passReasons;longData.reorderReasons=shared.reorderReasons;longData.pauseReasons=shared.pauseReasons;longData.adminPassword=shared.adminPassword;longData.defaultDark=shared.defaultDark;longData.smsTemplate=shared.smsTemplate;longData.takeShiftSms=shared.takeShiftSms;longData.officers=shared.officers;longData.units=shared.units;longData.openShifts=shared.openShifts;['adminPassword','supervisors','shifts','passReasons','reorderReasons','pauseReasons','defaultDark','smsTemplate','takeShiftSms','officers','units','openShifts'].forEach(k=>delete shortData[k]);const ls={...longData};delete ls.log;const ss={...shortData};delete ss.log;await Promise.all([putBin(LONG_BIN,ls),putBin(SHORT_BIN,ss)]);}
-function scheduleSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveActiveList,800);}
-function scheduleLogSave(){clearTimeout(logSaveTimer);logSaveTimer=setTimeout(saveActiveLog,800);}
+function scheduleSave(){clearTimeout(saveTimer);savePending=true;saveTimer=setTimeout(()=>{savePending=false;saveActiveList();},800);}
+function scheduleLogSave(){clearTimeout(logSaveTimer);logSavePending=true;logSaveTimer=setTimeout(()=>{logSavePending=false;saveActiveLog();},800);}
+function flushSaves(){if(savePending){clearTimeout(saveTimer);savePending=false;saveActiveList(true);}if(logSavePending){clearTimeout(logSaveTimer);logSavePending=false;saveActiveLog(true);}}
+window.addEventListener('beforeunload',flushSaves);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){flushSaves();}else if(!savePending&&!logSavePending&&lastUpdated&&Date.now()-lastUpdated.getTime()>60000){refreshData();}});
 async function refreshData(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();showStatus('Data loaded','success',1500);applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}catch(e){showStatus('Could not load data','error',0);}}
 function updateLastUpdated(){if(!lastUpdated)return;document.getElementById('last-updated').textContent='Updated '+lastUpdated.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 
@@ -588,7 +594,7 @@ function applyListUI(){const g=currentList==='long';document.getElementById('btn
 // AUTH
 function openAuthFlow(){closeAuthScreens();showOfficerSelect();}
 function closeAuthScreens(){['screen-officers','screen-pin','screen-admin'].forEach(id=>document.getElementById(id).classList.remove('open'));}
-function showOfficerSelect(){closeAuthScreens();const list=document.getElementById('officer-list');list.innerHTML='';(shared.officers||[]).forEach((o,i)=>{const btn=document.createElement('button');btn.className='officer-btn';btn.innerHTML=`<span>${o.name}</span><i class="ti ti-chevron-right" style="color:var(--text3)"></i>`;btn.onclick=()=>showPinPad(i);list.appendChild(btn);});document.getElementById('screen-officers').classList.add('open');}
+function showOfficerSelect(){closeAuthScreens();const list=document.getElementById('officer-list');list.innerHTML='';(shared.officers||[]).forEach((o,i)=>{const btn=document.createElement('button');btn.className='officer-btn';btn.innerHTML=`<span>${esc(o.name)}</span><i class="ti ti-chevron-right" style="color:var(--text3)"></i>`;btn.onclick=()=>showPinPad(i);list.appendChild(btn);});document.getElementById('screen-officers').classList.add('open');}
 function showPinPad(idx){pinOfficerIdx=idx;pinEntered=[];pinAttempts=0;document.getElementById('pin-name').textContent=shared.officers[idx].name;document.getElementById('pin-error').textContent='';updatePinDisplay();closeAuthScreens();document.getElementById('screen-pin').classList.add('open');}
 function showAdminLogin(){closeAuthScreens();document.getElementById('adm-user').value='';document.getElementById('adm-pass').value='';document.getElementById('adm-err').style.display='none';document.getElementById('screen-admin').classList.add('open');setTimeout(()=>document.getElementById('adm-user').focus(),300);}
 function submitAdminLogin(){const u=document.getElementById('adm-user').value.trim(),p=document.getElementById('adm-pass').value;if(u===ADMIN_USER&&p===shared.adminPassword){currentOfficer={name:'Admin',username:'admin',isAdmin:true};sessionExpiry=Date.now()+SESSION_MS;closeAuthScreens();applyAuth();LL().push({name:'— Login —',action:'reorder',shift:'',shiftDate:'',supervisor:'Admin',reason:'',notes:'Admin logged in',ts:Date.now()});scheduleLogSave();showToast('Logged in as Admin');}else{document.getElementById('adm-err').style.display='block';}}
@@ -619,7 +625,7 @@ function applyAuth(){
   document.getElementById('login-btn').style.display=li?'none':'inline-flex';
   document.getElementById('logout-btn').style.display=li?'inline-flex':'none';
   const ls=document.getElementById('login-status');
-  if(li){ls.style.display='flex';ls.innerHTML=`<i class="ti ti-shield-check"></i> ${currentOfficer.name}${adm?' <span style="font-size:10px;background:var(--green);color:#fff;padding:1px 5px;border-radius:3px;margin-left:3px">ADMIN</span>':''}`;}
+  if(li){ls.style.display='flex';ls.innerHTML=`<i class="ti ti-shield-check"></i> ${esc(currentOfficer.name)}${adm?' <span style="font-size:10px;background:var(--green);color:#fff;padding:1px 5px;border-radius:3px;margin-left:3px">ADMIN</span>':''}`;}
   else ls.style.display='none';
   document.getElementById('admin-tab').style.display=li?'inline-block':'none';
   document.getElementById('stats-tab').style.display=li?'inline-block':'none';
@@ -683,8 +689,6 @@ function animKey(btn){btn.style.background=keyPressBg();btn.style.color=keyPress
 function buildPinKeypad(){const kp=document.getElementById('pin-keypad');if(!kp)return;kp.innerHTML='';['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{const btn=document.createElement('button');btn.className='pin-key';btn.style.background=keyRestBg();btn.style.color=keyRestClr();btn.style.boxShadow='0 2px 6px rgba(0,0,0,.2)';if(k===''){btn.style.background='transparent';btn.style.boxShadow='none';btn.disabled=true;btn.style.cursor='default';}else if(k==='⌫'){btn.style.fontSize='22px';btn.innerHTML='<i class="ti ti-backspace" style="font-size:22px"></i>';btn.onclick=()=>{if(!pinEntered.length)return;pinEntered.pop();updatePinDisplay();if(navigator.vibrate)navigator.vibrate(8);animKey(btn);};}else{btn.textContent=k;btn.onclick=()=>{if(pinEntered.length>=4)return;pinEntered.push(parseInt(k));updatePinDisplay();if(navigator.vibrate)navigator.vibrate(8);animKey(btn);};}kp.appendChild(btn);});}
 
 // OFFICER PIN CHANGE
-function openPinChange(idx){changePinIdx=idx;document.getElementById('new-pin').value='';document.getElementById('pin-change-modal').classList.add('open');}
-function saveOfficerPin(){const v=document.getElementById('new-pin').value.trim();if(!/^\d{4}$/.test(v)){showToast('PIN must be exactly 4 digits');return;}shared.officers[changePinIdx].pin=v;saveShared().then(()=>{document.getElementById('pin-change-modal').classList.remove('open');showToast('PIN updated');renderAdmin();});}
 
 // HELPERS
 function toggleMultiShift(){const m=document.getElementById('multi-toggle').checked;document.getElementById('single-fields').style.display=m?'none':'block';document.getElementById('multi-fields').style.display=m?'block':'none';}
@@ -697,9 +701,10 @@ function startOfferTimer(){
     const rem=of.expiresAt-Date.now();
     document.querySelectorAll('.otimer').forEach(t=>t.textContent=fmtCountdown(rem));
     if(rem<=0){
+      if(!isLoggedIn()){document.querySelectorAll('.otimer').forEach(t=>t.textContent='0:00');return;}
       const exp=L().currentOffering;L().currentOffering=null;
       if(exp){const idx=L().employees.findIndex(e=>e.id===exp.empId);if(idx>=0){const emp=L().employees[idx];emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();LL().push({name:emp.name,action:'pass',shift:exp.shift||'',shiftDate:exp.shiftDate||'',supervisor:exp.supervisor||'',reason:'No response',notes:'Offer expired — no response within time limit',ts:Date.now()});}
-      const bar=document.getElementById('offering-bar');if(bar){bar.innerHTML=`<div class="owd" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><i class="ti ti-clock-off" style="font-size:16px;flex-shrink:0"></i><span>Offer to <strong>${exp.empName}</strong> expired — automatically logged as passed.</span></div><div class="owm" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><span>Offer to <strong>${exp.empName}</strong> expired</span></div>`;setTimeout(()=>{if(bar)bar.innerHTML='';},10000);}}
+      const bar=document.getElementById('offering-bar');if(bar){bar.innerHTML=`<div class="owd" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><i class="ti ti-clock-off" style="font-size:16px;flex-shrink:0"></i><span>Offer to <strong>${esc(exp.empName)}</strong> expired — automatically logged as passed.</span></div><div class="owm" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><span>Offer to <strong>${esc(exp.empName)}</strong> expired</span></div>`;setTimeout(()=>{if(bar)bar.innerHTML='';},10000);}}
       scheduleSave();scheduleLogSave();renderList();renderLog();
     }
   },1000);
@@ -747,7 +752,7 @@ function saveSmsTemplate(){const v=document.getElementById('sms-tmpl').value.tri
 function populateSmsTemplate(){const ta=document.getElementById('sms-tmpl');if(ta)ta.value=shared.smsTemplate||DEFAULT_SMS;}
 
 // PAUSE
-function openPauseModal(id){pendingPauseId=id;document.getElementById('pause-reason-select').innerHTML=`<option value="">— select reason —</option>`+(shared.pauseReasons||[]).map(r=>`<option value="${r}">${r}</option>`).join('');document.getElementById('pause-notes').value='';document.getElementById('pause-modal').classList.add('open');}
+function openPauseModal(id){pendingPauseId=id;document.getElementById('pause-reason-select').innerHTML=`<option value="">— select reason —</option>`+(shared.pauseReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('pause-notes').value='';document.getElementById('pause-modal').classList.add('open');}
 function closePauseModal(){document.getElementById('pause-modal').classList.remove('open');pendingPauseId=null;}
 function confirmPause(){const emp=L().employees.find(e=>e.id===pendingPauseId);if(!emp){closePauseModal();return;}const reason=document.getElementById('pause-reason-select').value,notes=document.getElementById('pause-notes').value.trim();emp.available=false;emp.pauseReason=reason;emp.pauseNotes=notes;LL().push({name:emp.name,action:'pause',shift:'',shiftDate:'',supervisor:officerName(),reason,notes:notes||'',ts:Date.now()});scheduleSave();scheduleLogSave();closePauseModal();renderList();renderLog();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}
 function unPause(id){const emp=L().employees.find(e=>e.id===id);if(!emp)return;emp.available=true;emp.pauseReason='';emp.pauseNotes='';scheduleSave();renderList();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}
@@ -758,7 +763,7 @@ function resetDaily(){L().employees.forEach(e=>{e.recentPassExpiry=0;e.recentAcc
 
 // OFFERING BANNER
 function renderOfferingBanner(of,li){const bar=document.getElementById('offering-bar');if(!of){bar.innerHTML='';return;}const rem=of.expiresAt-Date.now();if(rem<=0){bar.innerHTML='';return;}const si=of.isMulti?of.shiftDate:`${of.shift||'TBD'} · ${fmtDate(of.shiftDate)}`;const smsBtn=li&&of.empPhone?`<button class="btn btn-sms btn-sm" onclick="sendSms()"><i class="ti ti-message"></i> Send Text</button>`:'';
-  const callBtn=li&&of.empPhone?`<button class="btn btn-sm" onclick="confirmCall('${of.empPhone}','${of.empName}')" style="border-color:var(--green);color:var(--green);padding:8px 10px"><i class="ti ti-phone"></i></button>`:'';const cancelBtn=li?`<button class="btn btn-muted btn-sm" onclick="cancelOffering()">Cancel</button>`:'';bar.innerHTML=`<div class="owd"><i class="ti ti-phone-calling" style="font-size:16px;flex-shrink:0"></i><div style="flex:1;min-width:0"><strong>${of.empName}</strong>${of.empPhone?` <a href="sms:${of.empPhone}" style="color:var(--amber);font-size:11px"><i class="ti ti-message" style="font-size:11px"></i> ${of.empPhone}</a>`:''}<br><span style="opacity:.7;font-size:12px">· ${si} · ${of.supervisor} · started ${fmtTime(of.startedAt)}</span><br><span class="otimer" style="font-size:16px">${fmtCountdown(rem)}</span></div><div style="display:flex;gap:6px;flex-shrink:0;align-items:center">${callBtn}${smsBtn}${cancelBtn}</div></div><div class="owm"><div style="flex:1"><div style="font-weight:600;font-size:13px">${of.empName}</div><div style="font-size:11px;opacity:.8">${si} · ${of.supervisor}</div><span class="otimer" style="font-size:16px;display:block;margin-top:2px">${fmtCountdown(rem)}</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">${callBtn}${smsBtn}${cancelBtn}</div></div>`;}
+  const callBtn=li&&of.empPhone?`<button class="btn btn-sm" onclick="confirmCall('${esc(jstr(of.empPhone))}','${esc(jstr(of.empName))}')" style="border-color:var(--green);color:var(--green);padding:8px 10px"><i class="ti ti-phone"></i></button>`:'';const cancelBtn=li?`<button class="btn btn-muted btn-sm" onclick="cancelOffering()">Cancel</button>`:'';bar.innerHTML=`<div class="owd"><i class="ti ti-phone-calling" style="font-size:16px;flex-shrink:0"></i><div style="flex:1;min-width:0"><strong>${esc(of.empName)}</strong>${of.empPhone?` <a href="sms:${esc(of.empPhone)}" style="color:var(--amber);font-size:11px"><i class="ti ti-message" style="font-size:11px"></i> ${esc(of.empPhone)}</a>`:''}<br><span style="opacity:.7;font-size:12px">· ${si} · ${esc(of.supervisor)} · started ${fmtTime(of.startedAt)}</span><br><span class="otimer" style="font-size:16px">${fmtCountdown(rem)}</span></div><div style="display:flex;gap:6px;flex-shrink:0;align-items:center">${callBtn}${smsBtn}${cancelBtn}</div></div><div class="owm"><div style="flex:1"><div style="font-weight:600;font-size:13px">${esc(of.empName)}</div><div style="font-size:11px;opacity:.8">${si} · ${esc(of.supervisor)}</div><span class="otimer" style="font-size:16px;display:block;margin-top:2px">${fmtCountdown(rem)}</span></div><div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">${callBtn}${smsBtn}${cancelBtn}</div></div>`;}
 
 // RENDER LIST
 function renderList(){
@@ -770,7 +775,7 @@ function renderList(){
   const upNext=avail.find(e=>(e.todayPassCount||0)===minP);
   const effNext=upNext||(avail[0]||null);
   if(!L().employees.length){topBar.innerHTML='';con.innerHTML='<div style="padding:1rem;color:var(--text3)">No paramedics on list</div>';return;}
-  topBar.innerHTML=effNext?`<div class="top-offer ${sh?'to-short':'to-long'}"><i class="ti ti-${sh?'bolt':'ambulance'}"></i><span>Next up: <strong>${effNext.name}</strong> <span style="font-size:11px;opacity:.7">${sh?'· Short Notice (10 min)':'· Long Notice (1 hr)'}</span></span></div>`:`<div class="notice"><i class="ti ti-alert-circle"></i> All paramedics currently unavailable</div>`;
+  topBar.innerHTML=effNext?`<div class="top-offer ${sh?'to-short':'to-long'}"><i class="ti ti-${sh?'bolt':'ambulance'}"></i><span>Next up: <strong>${esc(effNext.name)}</strong> <span style="font-size:11px;opacity:.7">${sh?'· Short Notice (10 min)':'· Long Notice (1 hr)'}</span></span></div>`:`<div class="notice"><i class="ti ti-alert-circle"></i> All paramedics currently unavailable</div>`;
   let rank=0;
   con.innerHTML=L().employees.map(e=>{
     const avl=e.available!==false,rp=hasPassed(e),ra=hasAccepted(e);
@@ -781,15 +786,15 @@ function renderList(){
       ${li&&avl?`<div class="swipe-bg-a"><i class="ti ti-check"></i> Accept</div><div class="swipe-bg-p">Pass <i class="ti ti-x"></i></div><div class="sedge-l"><i class="ti ti-check"></i></div><div class="sedge-r"><i class="ti ti-x"></i></div>`:''}
       <div class="swipe-content" onclick="if(isMobile()&&isLoggedIn()&&!swipeData)openRowSheet(${e.id})">
         <span class="rank ${isNext?(sh?'ts':'tl'):''}">${avl?rank:'—'}</span>
-        <div class="avatar ${!avl?'unavailable':sh?'short':''}">${initials(e.name)}</div>
+        <div class="avatar ${!avl?'unavailable':sh?'short':''}">${esc(initials(e.name))}</div>
         <div class="emp-info">
-          <div class="emp-name-row">${e.name}
+          <div class="emp-name-row">${esc(e.name)}
             ${isOff?`<span class="ob"><i class="ti ti-phone-calling" style="font-size:10px"></i> Offering</span>`:''}
-            ${!avl?`<span class="ub"><i class="ti ti-zzz" style="font-size:10px"></i> ${e.pauseReason||'Unavailable'}</span>`:''}
+            ${!avl?`<span class="ub"><i class="ti ti-zzz" style="font-size:10px"></i> ${esc(e.pauseReason||'Unavailable')}</span>`:''}
             ${rp&&avl?`<span class="pb"><i class="ti ti-clock" style="font-size:10px"></i> Passed today${(e.todayPassCount||0)>1?' ('+e.todayPassCount+'x)':''}</span>`:''}
             ${ra&&avl?`<span class="ab"><i class="ti ti-check" style="font-size:10px"></i> Accepted today</span>`:''}
           </div>
-          ${li?`<div class="emp-stats">${e.acceptCount||0} accepted · ${e.passCount||0} passed${e.phone&&!isMobile()?` · <a href="sms:${e.phone}" style="color:var(--${sh?'blue':'green'});text-decoration:none;font-size:11px"><i class="ti ti-message" style="font-size:10px"></i> ${e.phone}</a>`:''}</div>`:''}
+          ${li?`<div class="emp-stats">${e.acceptCount||0} accepted · ${e.passCount||0} passed${e.phone&&!isMobile()?` · <a href="sms:${esc(e.phone)}" style="color:var(--${sh?'blue':'green'});text-decoration:none;font-size:11px"><i class="ti ti-message" style="font-size:10px"></i> ${esc(e.phone)}</a>`:''}</div>`:''}
         </div>
         <div class="btn-row list-action-btns">
           ${li?`${avl&&!isOff?`<button class="btn btn-warn btn-list" onclick="openOfferingModal(${e.id})"><i class="ti ti-phone-calling"></i> Offer</button>`:''}
@@ -802,7 +807,7 @@ function renderList(){
 }
 
 // ROW SHEET
-function openRowSheet(id){if(!isLoggedIn())return;sheetEmpId=id;const emp=L().employees.find(e=>e.id===id);if(!emp)return;const avl=emp.available!==false;document.getElementById('sheet-name').textContent=emp.name;const ph=document.getElementById('sheet-phone');if(emp.phone){ph.innerHTML=`<a href="sms:${emp.phone}" style="color:var(--green);text-decoration:none"><i class="ti ti-message"></i> ${emp.phone}</a>`;ph.style.display='block';}else ph.style.display='none';document.getElementById('sheet-pause-lbl').textContent=avl?'Pause / Mark unavailable':'Unpause / Mark available';document.getElementById('sheet-pause').querySelector('i').className=`ti ti-${avl?'player-pause':'player-play'}`;document.getElementById('sheet-offer').style.display=avl?'flex':'none';document.getElementById('sheet-accept').style.display=avl?'flex':'none';document.getElementById('sheet-pass').style.display=avl?'flex':'none';document.getElementById('row-sheet').classList.add('open');}
+function openRowSheet(id){if(!isLoggedIn())return;sheetEmpId=id;const emp=L().employees.find(e=>e.id===id);if(!emp)return;const avl=emp.available!==false;document.getElementById('sheet-name').textContent=emp.name;const ph=document.getElementById('sheet-phone');if(emp.phone){ph.innerHTML=`<a href="sms:${esc(emp.phone)}" style="color:var(--green);text-decoration:none"><i class="ti ti-message"></i> ${esc(emp.phone)}</a>`;ph.style.display='block';}else ph.style.display='none';document.getElementById('sheet-pause-lbl').textContent=avl?'Pause / Mark unavailable':'Unpause / Mark available';document.getElementById('sheet-pause').querySelector('i').className=`ti ti-${avl?'player-pause':'player-play'}`;document.getElementById('sheet-offer').style.display=avl?'flex':'none';document.getElementById('sheet-accept').style.display=avl?'flex':'none';document.getElementById('sheet-pass').style.display=avl?'flex':'none';document.getElementById('row-sheet').classList.add('open');}
 function closeRowSheet(){document.getElementById('row-sheet').classList.remove('open');sheetEmpId=null;}
 function sheetOffer(){const id=sheetEmpId;closeRowSheet();openOfferingModal(id);}
 function sheetAccept(){const id=sheetEmpId;closeRowSheet();openModal(id,'accept');}
@@ -822,12 +827,12 @@ function goPage(p){logPage=Math.max(1,Math.min(p,totalPages()));renderLog();}
 function changePerPage(v){logPerPage=parseInt(v);logPage=1;renderLog();}
 function sortLog(key){logPage=1;if(sortKey===key)sortDir*=-1;else{sortKey=key;sortDir=-1;}['name','action','shiftDate','ts'].forEach(k=>{const e=document.getElementById('sort-'+k);if(e)e.textContent=k===sortKey?(sortDir===1?'▲':'▼'):'';});document.getElementById('reset-filter-btn').style.display=isFilterActive()?'inline-flex':'none';renderLog();}
 function resetFilters(){document.getElementById('filter-name').value='';document.getElementById('filter-action').value='';sortKey='ts';sortDir=-1;logPage=1;['name','action','shiftDate','ts'].forEach(k=>{const e=document.getElementById('sort-'+k);if(e)e.textContent=k==='ts'?'▼':'';});document.getElementById('reset-filter-btn').style.display='none';renderLog();}
-function renderLog(){const fil=getFilteredLog(),total=(LL()||[]).length;logPage=Math.max(1,Math.min(logPage,totalPages()));const start=(logPage-1)*logPerPage,paged=fil.slice(start,start+logPerPage);document.getElementById('log-count').textContent=fil.length!==total?`${fil.length} of ${total} entries`:total?`${total} entr${total===1?'y':'ies'}`:'';const tp=totalPages(),pi=document.getElementById('pagination-info'),pg=document.getElementById('page-indicator');if(pi)pi.textContent=fil.length?`Showing ${start+1}–${Math.min(start+logPerPage,fil.length)} of ${fil.length}`:'';if(pg)pg.textContent=`${logPage} / ${tp}`;const pf=document.getElementById('page-first'),pp=document.getElementById('page-prev'),pn=document.getElementById('page-next'),pl=document.getElementById('page-last');if(pf)pf.disabled=logPage===1;if(pp)pp.disabled=logPage===1;if(pn)pn.disabled=logPage===tp;if(pl)pl.disabled=logPage===tp;const tbody=document.getElementById('log-body'),bm={accept:'accept',pass:'pass',reorder:'reorder',download:'download',pause:'pause',login:'login',reset:'reset',shift:'shift'};if(!fil.length){tbody.innerHTML=`<tr><td colspan="7" style="color:var(--text3);font-style:italic;padding:14px 10px">${total?'No entries match filters':'No entries yet'}</td></tr>`;}else{tbody.innerHTML=paged.map(l=>`<tr><td style="font-weight:500;white-space:nowrap">${l.name}</td><td><span class="badge badge-${bm[l.action]||'reorder'}">${l.action}</span></td><td>${l.shift?`<span class="badge badge-shift">${l.shift}</span>`:'—'}</td><td style="color:var(--text2);white-space:nowrap">${fmtDate(l.shiftDate)}</td><td style="color:var(--text2);white-space:nowrap">${l.supervisor||'—'}</td><td style="color:var(--text2)">${l.reason?`<span style="color:var(--amber)">${l.reason}</span>${l.notes?' — '+l.notes:''}`:l.notes||'—'}</td><td style="color:var(--text3);white-space:nowrap;font-size:12px">${fmtTs(l.ts)}</td></tr>`).join('');}const acc=(LL()||[]).filter(l=>l.action==='accept').length,pas=(LL()||[]).filter(l=>l.action==='pass').length;document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="lbl">Total offers</div><div class="val">${total}</div></div><div class="stat-card"><div class="lbl">Accepted</div><div class="val" style="color:var(--green)">${acc}</div></div><div class="stat-card"><div class="lbl">Passed</div><div class="val" style="color:var(--red)">${pas}</div></div><div class="stat-card"><div class="lbl">Accept rate</div><div class="val">${total?Math.round(acc/total*100):0}%</div></div>`;}
+function renderLog(){const fil=getFilteredLog(),total=(LL()||[]).length;logPage=Math.max(1,Math.min(logPage,totalPages()));const start=(logPage-1)*logPerPage,paged=fil.slice(start,start+logPerPage);document.getElementById('log-count').textContent=fil.length!==total?`${fil.length} of ${total} entries`:total?`${total} entr${total===1?'y':'ies'}`:'';const tp=totalPages(),pi=document.getElementById('pagination-info'),pg=document.getElementById('page-indicator');if(pi)pi.textContent=fil.length?`Showing ${start+1}–${Math.min(start+logPerPage,fil.length)} of ${fil.length}`:'';if(pg)pg.textContent=`${logPage} / ${tp}`;const pf=document.getElementById('page-first'),pp=document.getElementById('page-prev'),pn=document.getElementById('page-next'),pl=document.getElementById('page-last');if(pf)pf.disabled=logPage===1;if(pp)pp.disabled=logPage===1;if(pn)pn.disabled=logPage===tp;if(pl)pl.disabled=logPage===tp;const tbody=document.getElementById('log-body'),bm={accept:'accept',pass:'pass',reorder:'reorder',download:'download',pause:'pause',login:'login',reset:'reset',shift:'shift'};if(!fil.length){tbody.innerHTML=`<tr><td colspan="7" style="color:var(--text3);font-style:italic;padding:14px 10px">${total?'No entries match filters':'No entries yet'}</td></tr>`;}else{tbody.innerHTML=paged.map(l=>`<tr><td style="font-weight:500;white-space:nowrap">${esc(l.name)}</td><td><span class="badge badge-${bm[l.action]||'reorder'}">${l.action}</span></td><td>${l.shift?`<span class="badge badge-shift">${l.shift}</span>`:'—'}</td><td style="color:var(--text2);white-space:nowrap">${fmtDate(l.shiftDate)}</td><td style="color:var(--text2);white-space:nowrap">${esc(l.supervisor||'—')}</td><td style="color:var(--text2)">${l.reason?`<span style="color:var(--amber)">${esc(l.reason)}</span>${l.notes?' — '+esc(l.notes):''}`:esc(l.notes||'—')}</td><td style="color:var(--text3);white-space:nowrap;font-size:12px">${fmtTs(l.ts)}</td></tr>`).join('');}const acc=(LL()||[]).filter(l=>l.action==='accept').length,pas=(LL()||[]).filter(l=>l.action==='pass').length;document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="lbl">Total offers</div><div class="val">${total}</div></div><div class="stat-card"><div class="lbl">Accepted</div><div class="val" style="color:var(--green)">${acc}</div></div><div class="stat-card"><div class="lbl">Passed</div><div class="val" style="color:var(--red)">${pas}</div></div><div class="stat-card"><div class="lbl">Accept rate</div><div class="val">${total?Math.round(acc/total*100):0}%</div></div>`;}
 
 // ADMIN
 function renderAdmin(){const li=isLoggedIn(),adm=isAdmin();document.getElementById('admin-locked').style.display=li?'none':'block';document.getElementById('admin-content').style.display=li?'block':'none';if(!li)return;
 // Paramedics
-document.getElementById('admin-list').innerHTML=L().employees.map((e,i)=>{const avl=e.available!==false;return`<div class="emp-row drag-row ${!avl?'unavailable':''}" draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="dragDrop(event,${i})"><span class="rank drag-handle"><i class="ti ti-grip-vertical" style="color:var(--text3)"></i></span><div class="reorder-btns"><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},-1)" ${i===0?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-up"></i></button><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},1)" ${i===L().employees.length-1?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-down"></i></button></div><div class="avatar ${!avl?'unavailable':isShort()?'short':''}" id="ea-${e.id}">${initials(e.name)}</div><div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><input class="inline-input" value="${e.name}" id="en-${e.id}" oninput="markDirty(${e.id})" onkeydown="if(event.key==='Enter')saveEmpName(${e.id})" placeholder="Name"/><input class="inline-input-sm" value="${e.phone||''}" id="ep-${e.id}" oninput="markDirty(${e.id})" placeholder="Phone"/></div><button class="btn btn-accept btn-sm" id="es-${e.id}" onclick="saveEmpName(${e.id})" style="display:none"><i class="ti ti-check"></i></button><button class="btn btn-sm ${avl?'btn-muted':'btn-accept'}" onclick="${avl?`openPauseModal(${e.id})`:`unPause(${e.id})`}"><i class="ti ti-${avl?'player-pause':'player-play'}"></i></button><button class="btn btn-pass btn-sm" onclick="removeEmployee(${e.id})"><i class="ti ti-trash"></i></button></div>`;}).join('');
+document.getElementById('admin-list').innerHTML=L().employees.map((e,i)=>{const avl=e.available!==false;return`<div class="emp-row drag-row ${!avl?'unavailable':''}" draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="dragDrop(event,${i})"><span class="rank drag-handle"><i class="ti ti-grip-vertical" style="color:var(--text3)"></i></span><div class="reorder-btns"><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},-1)" ${i===0?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-up"></i></button><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},1)" ${i===L().employees.length-1?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-down"></i></button></div><div class="avatar ${!avl?'unavailable':isShort()?'short':''}" id="ea-${e.id}">${esc(initials(e.name))}</div><div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><input class="inline-input" value="${esc(e.name)}" id="en-${e.id}" oninput="markDirty(${e.id})" onkeydown="if(event.key==='Enter')saveEmpName(${e.id})" placeholder="Name"/><input class="inline-input-sm" value="${esc(e.phone||'')}" id="ep-${e.id}" oninput="markDirty(${e.id})" placeholder="Phone"/></div><button class="btn btn-accept btn-sm" id="es-${e.id}" onclick="saveEmpName(${e.id})" style="display:none"><i class="ti ti-check"></i></button><button class="btn btn-sm ${avl?'btn-muted':'btn-accept'}" onclick="${avl?`openPauseModal(${e.id})`:`unPause(${e.id})`}"><i class="ti ti-${avl?'player-pause':'player-play'}"></i></button><button class="btn btn-pass btn-sm" onclick="removeEmployee(${e.id})"><i class="ti ti-trash"></i></button></div>`;}).join('');
 // Officers list
 if(adm){
   document.getElementById('officers-list').innerHTML=(shared.officers||[]).map((o,i)=>{
@@ -842,7 +847,7 @@ if(adm){
     const loginTxt=o.lastLogin?'Last login: '+fmtTs(o.lastLogin):'Never logged in';
     return'<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border2)">'
       +dotHtml
-      +'<div class="avatar">'+initials(o.name)+'</div>'
+      +'<div class="avatar">'+esc(initials(o.name))+'</div>'
       +'<div style="flex:1;min-width:0">'
         +'<input class="inline-input" id="on-'+i+'" placeholder="Officer name" style="margin-bottom:3px" onblur="saveOfficerField('+i+')"/>'
         +'<input class="inline-input-sm" id="oph-'+i+'" placeholder="Phone number" onblur="saveOfficerField('+i+')"/>'
@@ -893,16 +898,16 @@ function openPinChange(i){changePinIdx=i;document.getElementById('new-pin').valu
 function saveOfficerPin(){const v=document.getElementById('new-pin').value.trim();if(!/^\d{4}$/.test(v)){showToast('PIN must be exactly 4 digits');return;}shared.officers[changePinIdx].pin=v;saveShared().then(()=>{document.getElementById('pin-change-modal').classList.remove('open');showToast('PIN updated');renderAdmin();});}
 
 // FIELD TAGS
-function renderUnitTags(){const el=document.getElementById('unit-tags');if(!el)return;el.innerHTML=(shared.units||[]).map((s,i)=>`<div class="shift-tag">${s}<button onclick="removeUnit(${i})">&times;</button></div>`).join('');}
+function renderUnitTags(){const el=document.getElementById('unit-tags');if(!el)return;el.innerHTML=(shared.units||[]).map((s,i)=>`<div class="shift-tag">${esc(s)}<button onclick="removeUnit(${i})">&times;</button></div>`).join('');}
 function addUnit(){const inp=document.getElementById('new-unit');const v=inp.value.trim().toUpperCase();if(!v||(shared.units||[]).includes(v)){inp.value='';return;}shared.units.push(v);inp.value='';renderUnitTags();saveShared().then(()=>showToast('Unit added'));}
 function removeUnit(i){shared.units.splice(i,1);renderUnitTags();saveShared();}
-function renderPassTags(){document.getElementById('pass-tags').innerHTML=(shared.passReasons||[]).map((s,i)=>`<div class="shift-tag">${s}<button onclick="removePassReason(${i})">&times;</button></div>`).join('');}
+function renderPassTags(){document.getElementById('pass-tags').innerHTML=(shared.passReasons||[]).map((s,i)=>`<div class="shift-tag">${esc(s)}<button onclick="removePassReason(${i})">&times;</button></div>`).join('');}
 function addPassReason(){const inp=document.getElementById('new-pass');const v=inp.value.trim();if(!v||(shared.passReasons||[]).includes(v)){inp.value='';return;}shared.passReasons.push(v);inp.value='';renderPassTags();}
 function removePassReason(i){shared.passReasons.splice(i,1);renderPassTags();}
-function renderReorderTags(){document.getElementById('reorder-tags').innerHTML=(shared.reorderReasons||[]).map((s,i)=>`<div class="shift-tag">${s}<button onclick="removeReorderReason(${i})">&times;</button></div>`).join('');}
+function renderReorderTags(){document.getElementById('reorder-tags').innerHTML=(shared.reorderReasons||[]).map((s,i)=>`<div class="shift-tag">${esc(s)}<button onclick="removeReorderReason(${i})">&times;</button></div>`).join('');}
 function addReorderReason(){const inp=document.getElementById('new-reorder');const v=inp.value.trim();if(!v||(shared.reorderReasons||[]).includes(v)){inp.value='';return;}shared.reorderReasons.push(v);inp.value='';renderReorderTags();}
 function removeReorderReason(i){shared.reorderReasons.splice(i,1);renderReorderTags();}
-function renderPauseTags(){document.getElementById('pause-tags').innerHTML=(shared.pauseReasons||[]).map((s,i)=>`<div class="shift-tag">${s}<button onclick="removePauseReason(${i})">&times;</button></div>`).join('');}
+function renderPauseTags(){document.getElementById('pause-tags').innerHTML=(shared.pauseReasons||[]).map((s,i)=>`<div class="shift-tag">${esc(s)}<button onclick="removePauseReason(${i})">&times;</button></div>`).join('');}
 function addPauseReason(){const inp=document.getElementById('new-pause');const v=inp.value.trim();if(!v||(shared.pauseReasons||[]).includes(v)){inp.value='';return;}shared.pauseReasons.push(v);inp.value='';renderPauseTags();}
 function removePauseReason(i){shared.pauseReasons.splice(i,1);renderPauseTags();}
 function saveFields(){saveShared().then(()=>{showToast('Field changes saved');});}
@@ -916,7 +921,7 @@ function moveEmp(i,dir){const ni=i+dir;if(ni<0||ni>=L().employees.length)return;
 function showReorderDoneBar(){let bar=document.getElementById('reorder-done-bar');if(!bar){bar=document.createElement('div');bar.id='reorder-done-bar';bar.style.cssText=`position:fixed;bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + .5rem);left:50%;transform:translateX(-50%);background:var(--green);color:#fff;font-size:13px;padding:8px 18px;border-radius:20px;z-index:9999;display:flex;align-items:center;gap:10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2)`;bar.innerHTML='<span>Tap Done when finished reordering</span><button onclick="finishReorder()" style="background:#fff;color:var(--green);border:none;border-radius:12px;padding:3px 10px;font-size:12px;font-weight:600;cursor:pointer">Done</button>';document.body.appendChild(bar);}bar.style.display='flex';}
 function hideReorderDoneBar(){const b=document.getElementById('reorder-done-bar');if(b)b.style.display='none';}
 function finishReorder(){clearTimeout(reorderTimer);hideReorderDoneBar();openReorderModal();}
-function openReorderModal(){document.getElementById('reorder-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.reorderReasons||[]).map(r=>`<option value="${r}">${r}</option>`).join('');document.getElementById('reorder-notes').value='';document.getElementById('reorder-officer-name').textContent=officerName();document.getElementById('reorder-modal').classList.add('open');}
+function openReorderModal(){document.getElementById('reorder-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.reorderReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('reorder-notes').value='';document.getElementById('reorder-officer-name').textContent=officerName();document.getElementById('reorder-modal').classList.add('open');}
 function cancelReorder(){document.getElementById('reorder-modal').classList.remove('open');refreshData();}
 function confirmReorder(){const r=document.getElementById('reorder-reason').value,n=document.getElementById('reorder-notes').value.trim();if(!r){alert('Please select a reason.');return;}const o=L().employees.map(e=>e.name).join(' → ');LL().push({name:'— List reorder —',action:'reorder',shift:'',shiftDate:'',supervisor:officerName(),reason:r,notes:`New order: ${o}${n?' | '+n:''}`,ts:Date.now()});scheduleSave();scheduleLogSave();renderList();renderLog();document.getElementById('reorder-modal').classList.remove('open');showToast('Reorder saved and logged');}
 
@@ -925,7 +930,7 @@ function changePassword(){const v=document.getElementById('new-pw').value.trim()
 function saveAdmin(){L().employees.forEach(e=>{const n=document.getElementById('en-'+e.id),p=document.getElementById('ep-'+e.id);if(n)e.name=n.value.trim()||e.name;if(p)e.phone=p.value.trim();});if(isAdmin()){(shared.officers||[]).forEach((o,i)=>{const n=document.getElementById('on-'+i);if(n&&n.value.trim())o.name=n.value.trim();});}Promise.all([saveActiveList(),saveShared()]).then(()=>{renderList();showToast('Changes saved');});}
 
 // OFFER MODAL
-function openModal(id,action){if(!isLoggedIn())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${r}">${r}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;if(of&&of.empId===id){document.getElementById('modal-date').value=of.isMulti?'':of.shiftDate||'';}document.getElementById('action-modal').classList.add('open');}
+function openModal(id,action){if(!isLoggedIn())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;if(of&&of.empId===id){document.getElementById('modal-date').value=of.isMulti?'':of.shiftDate||'';}document.getElementById('action-modal').classList.add('open');}
 function closeModal(){document.getElementById('action-modal').classList.remove('open');pendingAction=null;}
 function confirmAction(){if(!pendingAction||!isLoggedIn())return;const idx=L().employees.findIndex(e=>e.id===pendingAction.id);if(idx<0){closeModal();return;}const emp=L().employees[idx];LL().push({name:emp.name,action:pendingAction.action,shift:'',shiftDate:document.getElementById('modal-date').value,supervisor:officerName(),reason:pendingAction.action==='pass'?document.getElementById('modal-reason').value:'',notes:document.getElementById('modal-notes').value.trim(),ts:Date.now()});if(pendingAction.action==='accept'){emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();L().employees.splice(idx,1);L().employees.push(emp);}else{emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.recentAcceptExpiry=0;emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();}if(L().currentOffering&&L().currentOffering.empId===pendingAction.id)L().currentOffering=null;
   // Auto-fill open shift on accept
@@ -1009,7 +1014,7 @@ function renderSpotlightPerson(emp){
 }
 
 function statCard(label,value,color){
-  return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">${label}</div><div style="font-size:${typeof value==='number'||String(value).length<6?'22':'16'}px;font-weight:500;color:${color}">${value}</div></div>`;
+  return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">${esc(label)}</div><div style="font-size:${typeof value==='number'||String(value).length<6?'22':'16'}px;font-weight:500;color:${color}">${esc(value)}</div></div>`;
 }
 function lastName(n){return(n||'').split(' ').slice(-1)[0]||n;}
 
@@ -1089,11 +1094,11 @@ function renderOpenShifts(){
         +'<div style="font-size:15px;font-weight:600;color:var(--'+(filled?'text3':pri?'red':'green')+')">'+fmtDate(s.date)+'</div>'
       +'</div>'
       +'<div style="flex:1;min-width:0">'
-        +'<div style="font-size:14px;font-weight:500;color:var(--text)">'+s.unit+' <span style="font-size:12px;color:var(--text3)">· '+shiftTypeLabel(s.type)+'</span>'
+        +'<div style="font-size:14px;font-weight:500;color:var(--text)">'+esc(s.unit)+' <span style="font-size:12px;color:var(--text3)">· '+shiftTypeLabel(s.type)+'</span>'
         +(filled?'<span class="badge badge-accept" style="font-size:10px;margin-left:6px">Filled</span>':'')
         +'</div>'
-        +(s.notes?'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+s.notes+'</div>':'')
-        +(filled?'<div style="font-size:11px;color:var(--green);margin-top:2px"><i class="ti ti-check" style="font-size:10px"></i> Filled by '+s.filledBy+'</div>':'')
+        +(s.notes?'<div style="font-size:11px;color:var(--text3);margin-top:2px">'+esc(s.notes)+'</div>':'')
+        +(filled?'<div style="font-size:11px;color:var(--green);margin-top:2px"><i class="ti ti-check" style="font-size:10px"></i> Filled by '+esc(s.filledBy)+'</div>':'')
       +'</div>'
       +'<div style="display:flex;gap:6px;flex-shrink:0;align-items:center">'
         +(!filled&&!li?'<button class="btn btn-primary btn-sm" onclick="openTakeShiftModal(this)" data-sid="'+s.id+'"><i class="ti ti-hand-stop"></i> Take shift</button>':'')
@@ -1108,7 +1113,7 @@ function openAddShiftModal(){
   document.getElementById('shift-date-input').value='';
   document.getElementById('shift-type-input').value='24hr';
   document.getElementById('shift-notes-input').value='';
-  document.getElementById('shift-unit-input').innerHTML=(shared.units||[]).map(u=>`<option value="${u}">${u}</option>`).join('');
+  document.getElementById('shift-unit-input').innerHTML=(shared.units||[]).map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('');
   document.getElementById('add-shift-modal').classList.add('open');
 }
 function closeAddShiftModal(){document.getElementById('add-shift-modal').classList.remove('open');}
@@ -1139,7 +1144,7 @@ function openFillShiftModal(btnOrId){const id=typeof btnOrId==='string'?btnOrId:
   document.getElementById('fill-shift-desc').textContent=`${fmtDate(shift.date)} · ${shift.unit} · ${shiftTypeLabel(shift.type)}`;
   const sel=document.getElementById('fill-shift-person');
   const emps=[...new Set([...longData.employees.map(e=>e.name),...shortData.employees.map(e=>e.name)])].sort();
-  sel.innerHTML=emps.map(n=>`<option value="${n}">${n}</option>`).join('')+'<option value="__other__">Part timer / Other...</option>';
+  sel.innerHTML=emps.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__other__">Part timer / Other...</option>';
   document.getElementById('fill-other-field').style.display='none';
   document.getElementById('fill-other-name').value='';
   document.getElementById('fill-shift-modal').classList.add('open');
@@ -1167,7 +1172,7 @@ function openTakeShiftModal(btnOrId){const id=typeof btnOrId==='string'?btnOrId:
     const btn=document.createElement('button');
     btn.className='btn btn-primary';
     btn.style.cssText='justify-content:center;padding:12px';
-    btn.innerHTML='<i class="ti ti-message"></i> Text '+o.name;
+    btn.innerHTML='<i class="ti ti-message"></i> Text '+esc(o.name);
     btn.onclick=()=>sendTakeShift(o.phone,encodeURIComponent(msg));
     list.appendChild(btn);
   });
