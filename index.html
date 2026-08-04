@@ -143,11 +143,17 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 .cal-nav .cal-title{flex:1;text-align:center;font-weight:600;font-size:15px}
 #cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .cal-dowhead{font-size:10px;font-weight:600;color:var(--text3);text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:.05em}
-.cal-cell{border:1px solid var(--border2);border-radius:8px;padding:5px;min-height:96px;background:var(--surface)}
-.cal-cell.cal-blank{border:none;background:transparent;min-height:0}
+.cal-cell{border:1px solid var(--border);border-radius:8px;padding:0 0 5px;min-height:96px;background:var(--surface);overflow:hidden;box-shadow:0 1px 3px var(--shadow)}
+.cal-cell.cal-blank{border:none;background:transparent;min-height:0;box-shadow:none}
 .cal-cell.cal-past{opacity:.45}
 .cal-cell.cal-today{border-color:var(--green)}
-.cal-date{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.cal-cellhead{display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border-bottom:1px solid var(--border2);padding:3px 6px;margin-bottom:4px}
+body.dark .cal-cellhead{background:#2a322a}
+.cal-cell.cal-today .cal-cellhead{background:var(--green);border-bottom-color:var(--green)}
+.cal-cell.cal-today .cal-cellhead .cal-date{color:#fff}
+.cal-cell.cal-today .cal-cellhead .core-chip{color:#eaffea;border-color:#8fbf8f}
+.cal-cell>.cal-units,.cal-cell>.cal-ac,.cal-cell>.cal-corebody{margin-left:5px;margin-right:5px}
+.cal-date{font-size:13px;font-weight:800;color:var(--text)}
 .cal-dow{display:none;font-size:11px;color:var(--text3);margin-right:6px}
 .cal-units{display:grid;grid-template-columns:1fr 1fr;gap:3px}
 .cal-u{font-size:10px;font-weight:600;padding:4px 0;border:1px solid var(--border);border-radius:5px;text-align:center;cursor:pointer;color:var(--text3);background:transparent;user-select:none}
@@ -189,9 +195,15 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 @media(max-width:640px){
 #cal-grid{display:block}
 .cal-dowhead{display:none}
-.cal-cell{display:flex;align-items:center;gap:8px;min-height:0;margin-bottom:5px;padding:7px 9px}
+.cal-cell{display:flex;align-items:center;gap:8px;min-height:0;margin-bottom:5px;padding:7px 9px;overflow:visible;box-shadow:none;border-color:var(--border2)}
 .cal-cell.cal-blank{display:none}
-.cal-date{margin-bottom:0;min-width:52px}
+.cal-cellhead{background:transparent;border:none;padding:0;margin:0;min-width:52px;justify-content:flex-start}
+body.dark .cal-cellhead{background:transparent}
+.cal-cell.cal-today{border-color:var(--green)}
+.cal-cell.cal-today .cal-cellhead{background:transparent}
+.cal-cell.cal-today .cal-cellhead .cal-date{color:var(--green)}
+.cal-cell>.cal-units,.cal-cell>.cal-ac,.cal-cell>.cal-corebody{margin-left:0;margin-right:0}
+.cal-date{margin-bottom:0;font-size:12px;font-weight:700}
 .cal-dow{display:inline}
 .cal-units{display:flex;flex:1;gap:5px}
 .cal-u{flex:1;padding:6px 0}
@@ -594,7 +606,7 @@ const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have 
 const DEFAULT_SMS_3RD='Hi {name}, this is {officer} from North Country EMS. We are putting up a 3rd call rig on {date}. Want the shift? Please respond within {limit}.';
 const DEFAULT_SMS_AC='Hi {name}, this is {officer}. We need an Acting Captain on {date}. First to claim it gets it — let me know.';
 const ADMIN_USER='admin';
-const APP_VERSION='5.0';
+const APP_VERSION='5.1';
 function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
 document.addEventListener('DOMContentLoaded',applyVersionLabels);
 function showUpdateBar(v){if(document.getElementById('update-bar'))return;const b=document.createElement('div');b.id='update-bar';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--green);color:#fff;font-size:13px;padding:9px 14px;text-align:center;cursor:pointer';b.innerHTML='<i class="ti ti-refresh"></i> Version '+esc(v)+' is available — tap to update';b.onclick=async()=>{try{await fetch(location.pathname,{cache:'reload'});}catch(e){}location.reload();};document.body.appendChild(b);}
@@ -683,7 +695,7 @@ function renderCalendar(){
     let acHtml='';
     if(edit){acHtml='<div class="cal-ac'+(acSh?' on':'')+'" onclick="calToggle(\''+ds+'\',\'AC\')" title="Acting Captain'+(acSh&&acSh.filled?' — filled by '+esc(acSh.filledBy):'')+'">'+(acSh?(acSh.filled?'AC ✓ '+esc((acSh.filledBy||'').split(' ')[0]):'AC — posted'):'AC')+'</div>';}
     else if(acSh){const acOff2=calOfferingFor(acSh.id);let ac='cal-u on acu';if(acSh.filled)ac='cal-u filled';else if(acOff2)ac='cal-u offering';btns+='<div class="'+ac+'"'+(acSh.filled?'':' onclick="openTakeShiftModal(\''+acSh.id+'\')"')+' title="Acting Captain'+(acSh.filled?' — filled by '+esc(acSh.filledBy):'')+'">AC</div>';}
-    h+='<div class="'+cls+'"><div class="cal-date" style="display:flex;align-items:center"><span class="cal-dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>'+day+coreChip+'</div><div class="cal-units">'+btns+'</div>'+(edit?acHtml:'')+coreBody+'</div>';
+    h+='<div class="'+cls+'"><div class="cal-cellhead"><span class="cal-date"><span class="cal-dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>'+day+'</span>'+coreChip+'</div><div class="cal-units">'+btns+'</div>'+(edit?acHtml:'')+coreBody+'</div>';
   }
   grid.innerHTML=h;
 }
