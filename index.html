@@ -139,6 +139,37 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 .badge-reset{background:var(--amber-light);color:var(--amber);}
 .badge-shift{background:var(--green-light);color:var(--green);}
 .badge-pause{background:var(--amber-light);color:var(--amber);}.badge-skip{background:var(--amber-light);color:var(--amber);}
+.cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.cal-nav .cal-title{flex:1;text-align:center;font-weight:600;font-size:15px}
+#cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dowhead{font-size:10px;font-weight:600;color:var(--text3);text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:.05em}
+.cal-cell{border:1px solid var(--border2);border-radius:8px;padding:5px;min-height:96px;background:var(--surface)}
+.cal-cell.cal-blank{border:none;background:transparent;min-height:0}
+.cal-cell.cal-past{opacity:.45}
+.cal-cell.cal-today{border-color:var(--green)}
+.cal-date{font-size:11px;font-weight:600;color:var(--text2);margin-bottom:4px}
+.cal-dow{display:none;font-size:11px;color:var(--text3);margin-right:6px}
+.cal-units{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.cal-u{font-size:10px;font-weight:600;padding:4px 0;border:1px solid var(--border);border-radius:5px;text-align:center;cursor:pointer;color:var(--text3);background:transparent;user-select:none}
+.cal-u.on{background:var(--green);border-color:var(--green);color:#fff}
+.cal-u.on.cougar{background:var(--blue);border-color:var(--blue)}
+.cal-u.filled{background:var(--surface2);border-color:var(--border);color:var(--text3);text-decoration:line-through;cursor:default}
+.cal-u.offering{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.cal-core{font-size:9px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.view-seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.view-seg button{border:none;background:transparent;color:var(--text3);font-size:12px;padding:7px 14px;cursor:pointer;font-family:inherit}
+.view-seg button.active{background:var(--green);color:#fff}
+@media(max-width:640px){
+#cal-grid{display:block}
+.cal-dowhead{display:none}
+.cal-cell{display:flex;align-items:center;gap:8px;min-height:0;margin-bottom:5px;padding:7px 9px}
+.cal-cell.cal-blank{display:none}
+.cal-date{margin-bottom:0;min-width:52px}
+.cal-dow{display:inline}
+.cal-units{display:flex;flex:1;gap:5px}
+.cal-u{flex:1;padding:6px 0}
+.cal-core{display:none}
+}
 .badge-shift{background:var(--surface2);color:var(--text2);font-family:monospace;font-size:11px;border:1px solid var(--border);}
 .stat-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem;}
 .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 14px;}
@@ -348,10 +379,16 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
   </div>
   <!-- OPEN SHIFTS -->
   <div id="tab-shifts" class="section">
-    <div id="shifts-officer-actions" style="display:none;margin-bottom:1rem">
+    <div id="shifts-officer-actions" style="display:none;margin-bottom:1rem;align-items:center;gap:10px">
       <button class="btn btn-primary" onclick="openAddShiftModal()"><i class="ti ti-plus"></i> Add shift</button>
+      <span class="view-seg"><button id="sv-list" class="active" onclick="setShiftsView('list')"><i class="ti ti-list"></i> List</button><button id="sv-cal" onclick="setShiftsView('cal')"><i class="ti ti-calendar"></i> Calendar</button></span>
     </div>
     <div id="readonly-shifts-notice" class="notice"><i class="ti ti-eye"></i> View only — log in to add or edit shifts</div>
+    <div id="shifts-calendar" style="display:none"><div class="card" style="padding:12px">
+      <div class="cal-nav"><button class="btn btn-muted btn-sm" onclick="calNav(-1)"><i class="ti ti-chevron-left"></i></button><span class="cal-title" id="cal-title"></span><button class="btn btn-muted btn-sm" onclick="calNav(0)">Today</button><button class="btn btn-muted btn-sm" onclick="calNav(1)"><i class="ti ti-chevron-right"></i></button></div>
+      <div id="cal-grid"></div>
+      <p style="font-size:11px;color:var(--text3);margin-top:8px">Tap a unit to open or remove that shift. Blue = Cougar Car weekend. Struck through = filled (manage in List). Amber = offer in progress. Small letters = core rotation that day.</p>
+    </div></div>
     <div id="open-shifts-list" class="card"><div style="padding:1rem;color:var(--text3);font-size:13px">No open shifts posted</div></div>
   </div>
   <!-- STATS -->
@@ -445,11 +482,11 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="about-wrap">
           <div class="about-logo">NCEMS</div><div class="about-line"></div><div class="about-sub">Overtime</div>
           <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0"/>
-          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv">3.0</span></div>
+          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv">3.1</span></div>
           <div class="about-row"><span class="about-rl">Year</span><span class="about-rv">2026</span></div>
           <div class="about-row"><span class="about-rl">Organization</span><span class="about-rv">North Country EMS</span></div>
           <div class="about-row"><span class="about-rl">Platform</span><span class="about-rv">Web / PWA</span></div>
-          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 3.0 · 2026 · North Country EMS</div>
+          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 3.1 · 2026 · North Country EMS</div>
         </div>
       </div>
       <div style="margin-top:1rem"><button class="btn btn-primary" onclick="saveAdmin()"><i class="ti ti-check"></i> Save all changes</button></div>
@@ -546,6 +583,65 @@ const fmtCountdown=ms=>{if(ms<=0)return'Expired';const m=Math.floor(ms/60000),s=
 const midnight=()=>{const d=new Date();d.setHours(23,59,59,999);return d.getTime();};
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 const jstr=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+// ===== v3.1 calendar entry =====
+let calMonth=null,shiftsView='list';
+function laborDay(y){const d=new Date(y,8,1);return new Date(y,8,1+((8-d.getDay())%7));}
+function isCougarDate(ds){const d=rotParse(ds),y=d.getFullYear();if(d.getDay()!==0&&d.getDay()!==6)return false;const jul1=new Date(y,6,1),ld=laborDay(y);return d>=jul1&&d<=ld;}
+function calDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function setShiftsView(v){shiftsView=v;localStorage.setItem('ncems_shifts_view',v);const sl=document.getElementById('sv-list'),sc=document.getElementById('sv-cal');if(sl)sl.className=v==='list'?'active':'';if(sc)sc.className=v==='cal'?'active':'';document.getElementById('shifts-calendar').style.display=v==='cal'?'block':'none';document.getElementById('open-shifts-list').style.display=v==='cal'?'none':'block';if(v==='cal')renderCalendar();}
+function calNav(dir){if(dir===0){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);}else{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+dir,1);}renderCalendar();}
+function calShiftFor(ds,unit){return (shared.openShifts||[]).find(x=>x.date===ds&&x.unit===unit&&!x.archived);}
+function calOfferingFor(id){return [typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>o.openShiftId===id&&o.expiresAt>Date.now());}
+function renderCalendar(){
+  const grid=document.getElementById('cal-grid');if(!grid)return;
+  if(!calMonth){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);}
+  document.getElementById('cal-title').textContent=calMonth.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const today=calDs(new Date());
+  let h=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>'<div class="cal-dowhead">'+d+'</div>').join('');
+  const first=new Date(calMonth.getFullYear(),calMonth.getMonth(),1);
+  const days=new Date(calMonth.getFullYear(),calMonth.getMonth()+1,0).getDate();
+  for(let i=0;i<first.getDay();i++)h+='<div class="cal-cell cal-blank"></div>';
+  for(let day=1;day<=days;day++){
+    const d=new Date(calMonth.getFullYear(),calMonth.getMonth(),day),ds=calDs(d);
+    const core=coreOnDuty(ds);
+    const coreTxt=core.map(x=>x.slot).join('·');
+    const coreTitle=core.map(x=>x.slot+' '+x.name+' — '+x.note).join('\n');
+    const cls='cal-cell'+(ds<today?' cal-past':'')+(ds===today?' cal-today':'');
+    let btns='';
+    [['M51','M51'],['M52','M52'],['M54','M54'],['3rd Call','3rd']].forEach(u=>{
+      const sh=calShiftFor(ds,u[0]);
+      let c='cal-u',t=u[1];
+      if(sh){
+        const off=calOfferingFor(sh.id);
+        if(sh.filled)c+=' filled';
+        else if(off)c+=' offering';
+        else c+=' on'+(sh.cougar?' cougar':'');
+      }
+      btns+='<div class="'+c+'" onclick="calToggle(\''+ds+'\',\''+u[0].replace(/'/g,"\\'")+'\')" title="'+esc(u[0])+(sh&&sh.filled?' — filled by '+esc(sh.filledBy):'')+'">'+t+'</div>';
+    });
+    h+='<div class="'+cls+'"><div class="cal-date"><span class="cal-dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>'+day+'</div><div class="cal-units">'+btns+'</div>'+(coreTxt?'<div class="cal-core" title="'+esc(coreTitle)+'">'+esc(coreTxt)+'</div>':'')+'</div>';
+  }
+  grid.innerHTML=h;
+}
+function calToggle(ds,unit){
+  if(!isLoggedIn()){showToast('Log in to edit shifts');return;}
+  const sh=calShiftFor(ds,unit);
+  if(sh){
+    const off=calOfferingFor(sh.id);
+    if(sh.filled){showToast('Filled by '+(sh.filledBy||'?')+' — manage in List view');return;}
+    if(off){showToast('Offer in progress for this shift');return;}
+    shared.openShifts.splice(shared.openShifts.indexOf(sh),1);
+    LL().push({name:'— Open shift —',action:'shift',shift:'',shiftDate:ds,supervisor:officerName(),reason:'Removed',notes:unit+' removed via calendar',ts:Date.now()});
+  }else{
+    const cougar=unit==='M54'&&isCougarDate(ds);
+    shared.openShifts.push({id:'s'+Date.now(),date:ds,unit,type:'24hr',notes:cougar?'Cougar Car':'',priority:false,cougar,filled:false,filledBy:'',filledAt:0,addedBy:officerName(),addedAt:Date.now(),archived:false});
+    LL().push({name:'— Open shift —',action:'shift',shift:'',shiftDate:ds,supervisor:officerName(),reason:'Added',notes:unit+(cougar?' (Cougar Car)':'')+' added via calendar',ts:Date.now()});
+  }
+  scheduleSharedSave();scheduleLogSave();
+  renderCalendar();renderOpenShifts();populateOpenShiftDropdown();
+}
+let sharedSaveTimer=null,sharedSavePending=false;
+function scheduleSharedSave(){clearTimeout(sharedSaveTimer);sharedSavePending=true;sharedSaveTimer=setTimeout(()=>{sharedSavePending=false;saveShared().then(()=>showStatus('Saved','success',1500)).catch(()=>showStatus('Save failed — tap Refresh','error',4000));},1200);}
 // ===== v3 rotation engine (baseline core-shift math; names are admin-editable via Rotation slots) =====
 const ROT_DEFAULT_SLOTS={X:'Stephen Schutts',Y:'Josh Robertson',R:'Lyndsey Maylone',A:'Colin Scott',B:'Tim Pedersen',C:'Tyler Komm',F1:'Stephanie Hagen',F2:'Nicholas Stafford',B1:'Douglas Boyce',B2:'Dennis Madler',B3:'Derek Langdon'};
 const ROT_SLOT_LABELS={X:'X · Mon M51 / Fri M52',Y:'Y · Thu M51 + alt wknd',R:'R · Tue M51 + alt wknd',A:'A · 24/48',B:'B · 24/48',C:'C · 24/48',F1:'Flex 1 · Wed M51 set',F2:'Flex 2 · Sat M54 set',B1:'BC · 48 starts B-days',B2:'BC · 48 starts A-days',B3:'BC · 48 starts C-days'};
@@ -661,9 +757,9 @@ async function saveActiveLog(ka){try{const lg=LL();if(lg.length>300)lg.splice(0,
 async function saveShared(){longData.supervisors=shared.supervisors;longData.shifts=shared.shifts;longData.passReasons=shared.passReasons;longData.reorderReasons=shared.reorderReasons;longData.pauseReasons=shared.pauseReasons;longData.adminPassword=shared.adminPassword;longData.defaultDark=shared.defaultDark;longData.smsTemplate=shared.smsTemplate;longData.takeShiftSms=shared.takeShiftSms;longData.officers=shared.officers;longData.units=shared.units;longData.rotationSlots=shared.rotationSlots;longData.openShifts=shared.openShifts;['adminPassword','supervisors','shifts','passReasons','reorderReasons','pauseReasons','defaultDark','smsTemplate','takeShiftSms','officers','units','rotationSlots','openShifts'].forEach(k=>delete shortData[k]);const ls={...longData};delete ls.log;const ss={...shortData};delete ss.log;await Promise.all([putBin(LONG_BIN,ls),putBin(SHORT_BIN,ss)]);}
 function scheduleSave(){clearTimeout(saveTimer);savePending=true;saveTimer=setTimeout(()=>{savePending=false;saveActiveList();},800);}
 function scheduleLogSave(){clearTimeout(logSaveTimer);logSavePending=true;logSaveTimer=setTimeout(()=>{logSavePending=false;saveActiveLog();},800);}
-function flushSaves(){if(savePending){clearTimeout(saveTimer);savePending=false;saveActiveList(true);}if(logSavePending){clearTimeout(logSaveTimer);logSavePending=false;saveActiveLog(true);}}
+function flushSaves(){if(savePending){clearTimeout(saveTimer);savePending=false;saveActiveList(true);}if(logSavePending){clearTimeout(logSaveTimer);logSavePending=false;saveActiveLog(true);}if(sharedSavePending){clearTimeout(sharedSaveTimer);sharedSavePending=false;saveShared().catch(()=>{});}}
 window.addEventListener('beforeunload',flushSaves);
-document.addEventListener('visibilitychange',()=>{if(document.hidden){flushSaves();}else if(!savePending&&!logSavePending&&lastUpdated&&Date.now()-lastUpdated.getTime()>60000){refreshData();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){flushSaves();}else if(!savePending&&!logSavePending&&!sharedSavePending&&lastUpdated&&Date.now()-lastUpdated.getTime()>60000){refreshData();}});
 async function refreshData(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();showStatus('Data loaded','success',1500);applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}catch(e){showStatus('Could not load data','error',0);}}
 function updateLastUpdated(){if(!lastUpdated)return;document.getElementById('last-updated').textContent='Updated '+lastUpdated.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 
@@ -673,7 +769,7 @@ function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.curr
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(isLoggedIn()&&localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
 function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
@@ -713,6 +809,7 @@ function confirmPin(){
 function doLogout(){sessionExpiry=0;currentOfficer=null;if(document.getElementById('tab-admin').classList.contains('active'))showTab('list');applyAuth();showToast('Logged out');}
 function applyAuth(){
   const li=isLoggedIn(),adm=isAdmin();
+  if(!li&&shiftsView==='cal')setShiftsView('list');
   document.getElementById('login-btn').style.display=li?'none':'inline-flex';
   document.getElementById('logout-btn').style.display=li?'inline-flex':'none';
   const ls=document.getElementById('login-status');
@@ -1152,7 +1249,7 @@ let pendingFillShiftId=null;
 
 function shiftTypeLabel(t){return t==='24hr'?'24 hour':t==='12am'?'12hr AM':'12hr PM';}
 
-function renderOpenShifts(){
+function renderOpenShifts(){if(shiftsView==='cal'){const g=document.getElementById('cal-grid');if(g)renderCalendar();}
   const con=document.getElementById('open-shifts-list');if(!con)return;
   // Auto-archive past/filled shifts older than 24hrs
   const now=Date.now();
@@ -1188,6 +1285,7 @@ function renderOpenShifts(){
       +'</div>'
       +'<div style="flex:1;min-width:0">'
         +'<div style="font-size:14px;font-weight:500;color:var(--text)">'+esc(s.unit)+' <span style="font-size:12px;color:var(--text3)">· '+shiftTypeLabel(s.type)+'</span>'
+        +(s.cougar?'<span class="badge badge-login" style="font-size:10px;margin-left:6px">Cougar</span>':'')
         +(filled?'<span class="badge badge-accept" style="font-size:10px;margin-left:6px">Filled</span>':'')
         +(off&&!filled?'<span class="badge badge-skip" style="font-size:10px;margin-left:6px"><i class="ti ti-phone-calling" style="font-size:9px"></i> Offering to '+esc((off.empName||'').split(' ')[0])+'</span>':'')
         +'</div>'
