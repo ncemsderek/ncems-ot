@@ -385,9 +385,9 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
   </div>
   <!-- OPEN SHIFTS -->
   <div id="tab-shifts" class="section">
-    <div id="shifts-officer-actions" style="display:none;margin-bottom:1rem;align-items:center;gap:10px">
-      <button class="btn btn-primary" onclick="openAddShiftModal()"><i class="ti ti-plus"></i> Add shift</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
       <span class="view-seg"><button id="sv-list" class="active" onclick="setShiftsView('list')"><i class="ti ti-list"></i> List</button><button id="sv-cal" onclick="setShiftsView('cal')"><i class="ti ti-calendar"></i> Calendar</button></span>
+      <span id="shifts-officer-actions" style="display:none"><button class="btn btn-primary" onclick="openAddShiftModal()"><i class="ti ti-plus"></i> Add shift</button></span>
     </div>
     <div id="readonly-shifts-notice" class="notice"><i class="ti ti-eye"></i> View only — log in to add or edit shifts</div>
     <div id="shifts-calendar" style="display:none"><div class="card" style="padding:12px">
@@ -556,7 +556,7 @@ const STORAGE_API='https://ncems-ot.d-langdon.workers.dev/bin/';
 const LONG_TO=3600000,SHORT_TO=600000,SESSION_MS=3600000;
 const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have an OT opportunity for the {shift} shift on {date}. Please respond within {limit}.';
 const ADMIN_USER='admin';
-const APP_VERSION='4.0';
+const APP_VERSION='4.1';
 function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
 document.addEventListener('DOMContentLoaded',applyVersionLabels);
 const SEG_PATHS=['M3 2 L23 2 L20 6 L6 6 Z','M22 4 L25 7 L24 21 L20 18 L21 7 Z','M22 25 L25 28 L24 44 L20 41 L21 28 Z','M3 46 L23 46 L20 42 L6 42 Z','M1 25 L5 28 L4 41 L1 44 L0 28 Z','M1 4 L5 7 L4 18 L1 21 L0 7 Z','M4 22 L8 19 L18 19 L22 22 L18 25 L8 25 Z'];
@@ -618,8 +618,10 @@ function renderCalendar(){
     const coreTitle=core.map(x=>x.slot+' '+x.name+' — '+x.note).join('\n');
     const cls='cal-cell'+(ds<today?' cal-past':'')+(ds===today?' cal-today':'');
     let btns='';
+    const editMode=isLoggedIn();
     [['M51','M51'],['M52','M52'],['M54','M54'],['3rd Call','3rd']].forEach(u=>{
       const sh=calShiftFor(ds,u[0]);
+      if(!editMode&&!sh)return; // crew view: only show days with actual shifts
       let c='cal-u',t=u[1];
       if(sh){
         const off=calOfferingFor(sh.id);
@@ -627,8 +629,12 @@ function renderCalendar(){
         else if(off)c+=' offering';
         else c+=' on'+(sh.cougar?' cougar':'');
       }
-      btns+='<div class="'+c+'" onclick="calToggle(\''+ds+'\',\''+u[0].replace(/'/g,"\\'")+'\')" title="'+esc(u[0])+(sh&&sh.filled?' — filled by '+esc(sh.filledBy):'')+'">'+t+'</div>';
+      const off2=sh?calOfferingFor(sh.id):null;
+      const title=esc(u[0])+(sh&&sh.filled?' — filled by '+esc(sh.filledBy):'')+(off2?' — offering to '+esc((off2.empName||'').split(' ')[0]):'')+(sh&&sh.cougar?' — Cougar Car':'');
+      const click=editMode?('calToggle(\''+ds+'\',\''+u[0].replace(/'/g,"\\'")+'\')'):(sh&&!sh.filled?('openTakeShiftModal(\''+sh.id+'\')'):'');
+      btns+='<div class="'+c+'"'+(click?' onclick="'+click+'"':'')+' title="'+title+'">'+t+(off2&&!editMode?'…':'')+'</div>';
     });
+    if(!editMode&&!btns)btns='';
     h+='<div class="'+cls+'"><div class="cal-date"><span class="cal-dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>'+day+'</div><div class="cal-units">'+btns+'</div>'+(coreTxt?'<div class="cal-core" title="'+esc(coreTitle)+'">'+esc(coreTxt)+'</div>':'')+'</div>';
   }
   grid.innerHTML=h;
@@ -769,6 +775,9 @@ function scheduleSave(){clearTimeout(saveTimer);savePending=true;saveTimer=setTi
 function scheduleLogSave(){clearTimeout(logSaveTimer);logSavePending=true;logSaveTimer=setTimeout(()=>{logSavePending=false;saveActiveLog();},800);}
 function flushSaves(){if(savePending){clearTimeout(saveTimer);savePending=false;saveActiveList(true);}if(logSavePending){clearTimeout(logSaveTimer);logSavePending=false;saveActiveLog(true);}if(sharedSavePending){clearTimeout(sharedSaveTimer);sharedSavePending=false;saveShared().catch(()=>{});}}
 window.addEventListener('beforeunload',flushSaves);
+function closeAnyModal(bg){bg.classList.remove('open');if(bg.id==='offering-modal')pendingOfferingId=null;if(bg.id==='action-modal')pendingAction=null;}
+document.addEventListener('click',e=>{const t=e.target;if(t.classList&&t.classList.contains('modal-bg')&&t.classList.contains('open'))closeAnyModal(t);},true);
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const open=[...document.querySelectorAll('.modal-bg.open')];if(open.length)closeAnyModal(open[open.length-1]);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){flushSaves();}else if(!savePending&&!logSavePending&&!sharedSavePending&&lastUpdated&&Date.now()-lastUpdated.getTime()>60000){refreshData();}});
 async function refreshData(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();showStatus('Data loaded','success',1500);applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}catch(e){showStatus('Could not load data','error',0);}}
 function updateLastUpdated(){if(!lastUpdated)return;document.getElementById('last-updated').textContent='Updated '+lastUpdated.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
@@ -779,7 +788,7 @@ function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.curr
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(isLoggedIn()&&localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
 function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
@@ -819,7 +828,7 @@ function confirmPin(){
 function doLogout(){sessionExpiry=0;currentOfficer=null;if(document.getElementById('tab-admin').classList.contains('active'))showTab('list');applyAuth();showToast('Logged out');}
 function applyAuth(){
   const li=isLoggedIn(),adm=isAdmin();
-  if(!li&&shiftsView==='cal')setShiftsView('list');
+  if(shiftsView==='cal')renderCalendar();
   document.getElementById('login-btn').style.display=li?'none':'inline-flex';
   document.getElementById('logout-btn').style.display=li?'inline-flex':'none';
   const ls=document.getElementById('login-status');
@@ -1426,7 +1435,7 @@ function populateTakeSmsTemplate(){const ta=document.getElementById('take-sms-tm
 
 function deleteOpenShift(btnOrId){const id=typeof btnOrId==='string'?btnOrId:btnOrId.dataset.sid;if(!confirm('Remove this open shift?'))return;shared.openShifts=shared.openShifts.filter(s=>s.id!==id);saveShared().then(()=>{renderOpenShifts();populateOpenShiftDropdown();showToast('Shift removed');});}
 
-function showToast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText=`position:fixed;bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + .5rem);left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12px;padding:7px 16px;border-radius:20px;z-index:9999;opacity:0;transition:opacity .2s;white-space:nowrap`;document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},2000);}
+function showToast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText=`position:fixed;bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + .5rem);left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12px;padding:7px 16px;border-radius:20px;z-index:9999;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none`;document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},2000);}
 
 // Load Chart.js
 if(!window.Chart){const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js';document.head.appendChild(s);}
