@@ -302,6 +302,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
     <button class="dark-toggle" onclick="toggleDark()" id="dark-btn"><i class="ti ti-moon"></i></button>
     <span class="login-status" id="login-status"></span>
     <button class="btn btn-primary btn-sm" id="login-btn" onclick="openAuthFlow()"><i class="ti ti-lock"></i> Login</button>
+    <button class="btn btn-sm" id="selfpin-btn" onclick="openPinModal({mode:'self'})" style="display:none" title="Change my PIN"><i class="ti ti-key"></i></button>
     <button class="btn btn-sm" id="logout-btn" onclick="doLogout()" style="display:none"><i class="ti ti-logout"></i></button>
   </div>
 </header>
@@ -454,6 +455,8 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="cb open"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Drag (desktop) or arrows (mobile) to reorder.</p><div id="admin-list"></div></div>
         <div class="ch admin-only" onclick="toggleCollapse(this)" style="margin-top:.5rem;display:none"><h3><i class="ti ti-shield"></i> On Duty Officers</h3><div style="display:flex;align-items:center;gap:8px"><button class="btn btn-sm" onclick="event.stopPropagation();addOfficer()"><i class="ti ti-plus"></i> Add</button><i class="ti ti-chevron-down chev"></i></div></div>
         <div class="cb admin-only" id="officers-collapsible" style="display:none"><div id="officers-list"></div></div>
+        <div class="ch admin-only" onclick="toggleCollapse(this)" style="margin-top:.5rem;display:none"><h3><i class="ti ti-users"></i> Crew Logins</h3><i class="ti ti-chevron-down chev"></i></div>
+        <div class="cb admin-only" id="crewlogins-collapsible" style="display:none"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Crew logins are view-only: crew can see the lists, log, and open shifts, but cannot offer, accept, or edit. Set a temporary PIN; they will be asked to choose their own at first login.</p><div id="crewlogins-list"></div></div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-rotate-clockwise-2"></i> Rotation slots</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb"><p style="font-size:12px;color:var(--text3);margin-bottom:8px">Baseline rotation only. Trades, leave, and station swaps live in Aladtec and are not reflected here.</p><div id="rotation-slots"></div><div style="margin-top:10px;font-size:12px;font-weight:600;color:var(--text2)">Next 14 days (computed)</div><div id="rotation-preview" style="max-height:220px;overflow-y:auto;margin-top:4px"></div></div>
       </div>
@@ -483,9 +486,9 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
           <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSmsTemplate()"><i class="ti ti-check"></i> Save template</button>
         </div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-message"></i> Offering SMS — 3rd Call</h3><i class="ti ti-chevron-down chev"></i></div>
-        <div class="cb"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Used automatically when the offered shift is 3rd Call. Same placeholders.</p><textarea id="sms-tmpl-3rd" style="width:100%;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;background:var(--input-bg);color:var(--text);font-family:inherit;height:96px;resize:vertical"></textarea><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSms3rd()"><i class="ti ti-check"></i> Save template</button></div>
+        <div class="cb"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Used automatically when the offered shift is 3rd Call. Tap a placeholder to insert at cursor.</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"><button class="btn btn-sm" onclick="insertPh('sms-tmpl-3rd','{name}')">{name}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-3rd','{shift}')">{shift}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-3rd','{date}')">{date}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-3rd','{officer}')">{officer}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-3rd','{limit}')">{limit}</button></div><textarea id="sms-tmpl-3rd" style="width:100%;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;background:var(--input-bg);color:var(--text);font-family:inherit;height:96px;resize:vertical"></textarea><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSms3rd()"><i class="ti ti-check"></i> Save template</button></div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-message"></i> Offering SMS — Acting Captain</h3><i class="ti ti-chevron-down chev"></i></div>
-        <div class="cb"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Used automatically when the offered shift is AC. Same placeholders.</p><textarea id="sms-tmpl-ac" style="width:100%;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;background:var(--input-bg);color:var(--text);font-family:inherit;height:96px;resize:vertical"></textarea><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSmsAC()"><i class="ti ti-check"></i> Save template</button></div>
+        <div class="cb"><p style="font-size:12px;color:var(--text3);margin-bottom:10px">Used automatically when the offered shift is AC. Tap a placeholder to insert at cursor.</p><div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"><button class="btn btn-sm" onclick="insertPh('sms-tmpl-ac','{name}')">{name}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-ac','{shift}')">{shift}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-ac','{date}')">{date}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-ac','{officer}')">{officer}</button><button class="btn btn-sm" onclick="insertPh('sms-tmpl-ac','{limit}')">{limit}</button></div><textarea id="sms-tmpl-ac" style="width:100%;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;background:var(--input-bg);color:var(--text);font-family:inherit;height:96px;resize:vertical"></textarea><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSmsAC()"><i class="ti ti-check"></i> Save template</button></div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-message-2"></i> "Take shift" SMS template</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb">
           <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Sent when a paramedic taps "Take shift". Placeholders: {officer} {unit} {date} {day} {type}</p>
@@ -505,7 +508,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="ch open" onclick="toggleCollapse(this)"><h3><i class="ti ti-lock"></i> Admin password</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb open">
           <div style="display:flex;gap:8px;align-items:center"><input type="password" id="new-pw" placeholder="New password (min 4 chars)" style="flex:1;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:7px 10px;background:var(--input-bg);color:var(--text)"/><button class="btn" onclick="changePassword()"><i class="ti ti-check"></i> Set</button></div>
-          <p style="font-size:12px;color:var(--text3);margin-top:8px">If forgotten: open the ncems-ot-data KV namespace in the Cloudflare dashboard, edit the "long" key, and change "adminPassword". <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">"adminPassword"</code> and change the value.</p>
+          <p style="font-size:12px;color:var(--text3);margin-top:8px">Passwords and PINs are stored hashed on the server. If the admin password is lost: in the Cloudflare dashboard, open the ncems-ot-data KV namespace and delete the <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">auth</code> key, then re-run the one-time setup snippet to recreate all logins.</p>
         </div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-moon"></i> Display</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb">
@@ -578,17 +581,20 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
     <div class="modal-btns"><button class="btn" onclick="closeFillShiftModal()">Cancel</button><button class="btn btn-accept" onclick="confirmFillShift()"><i class="ti ti-check"></i> Mark as filled</button></div>
   </div>
 </div>
-<div class="modal-bg" id="pin-change-modal"><div class="modal"><h3><i class="ti ti-lock" style="margin-right:6px"></i>Change your PIN</h3><div class="field"><label>New 4-digit PIN</label><input type="password" id="new-pin" placeholder="Enter new PIN" maxlength="4" inputmode="numeric"/></div><div class="modal-btns"><button class="btn" onclick="document.getElementById('pin-change-modal').classList.remove('open')">Cancel</button><button class="btn btn-primary" onclick="saveOfficerPin()"><i class="ti ti-check"></i> Save PIN</button></div></div></div>
+<div class="modal-bg" id="pin-change-modal"><div class="modal"><h3 id="pin-modal-title"><i class="ti ti-lock" style="margin-right:6px"></i>Change your PIN</h3><p id="pin-modal-note" style="font-size:12px;color:var(--text3);margin-bottom:10px;display:none"></p><div class="field" id="cur-pin-field"><label>Current PIN</label><input type="password" id="cur-pin" placeholder="Current 4-digit PIN" maxlength="4" inputmode="numeric"/></div><div class="field"><label>New 4-digit PIN</label><input type="password" id="new-pin" placeholder="Enter new PIN" maxlength="4" inputmode="numeric"/></div><div class="modal-btns"><button class="btn" id="pin-modal-cancel" onclick="document.getElementById('pin-change-modal').classList.remove('open')">Cancel</button><button class="btn btn-primary" onclick="pinModalSave()"><i class="ti ti-check"></i> Save PIN</button></div></div></div>
 <script>
 const LONG_BIN='long',SHORT_BIN='short'; // Cloudflare KV keys (storage migrated off JSONBin, v4.0)
 const LONG_LOG='longlog',SHORT_LOG='shortlog';
-const STORAGE_API='https://ncems-ot.d-langdon.workers.dev/bin/';
+const WORKER_BASE='https://ncems-ot.d-langdon.workers.dev';
+const STORAGE_API=WORKER_BASE+'/bin/';
+const AUTH_API=WORKER_BASE+'/auth/';
+let authToken='',authUsers=null,selectedAuthName='',lastEnteredPin='',pinModalMode=null;
 const LONG_TO=3600000,SHORT_TO=600000,SESSION_MS=3600000;
 const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have an OT opportunity for the {shift} shift on {date}. Please respond within {limit}.';
 const DEFAULT_SMS_3RD='Hi {name}, this is {officer} from North Country EMS. We are putting up a 3rd call rig on {date}. Want the shift? Please respond within {limit}.';
 const DEFAULT_SMS_AC='Hi {name}, this is {officer}. We need an Acting Captain on {date}. First to claim it gets it — let me know.';
 const ADMIN_USER='admin';
-const APP_VERSION='4.3';
+const APP_VERSION='5.0';
 function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
 document.addEventListener('DOMContentLoaded',applyVersionLabels);
 function showUpdateBar(v){if(document.getElementById('update-bar'))return;const b=document.createElement('div');b.id='update-bar';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--green);color:#fff;font-size:13px;padding:9px 14px;text-align:center;cursor:pointer';b.innerHTML='<i class="ti ti-refresh"></i> Version '+esc(v)+' is available — tap to update';b.onclick=async()=>{try{await fetch(location.pathname,{cache:'reload'});}catch(e){}location.reload();};document.body.appendChild(b);}
@@ -599,7 +605,7 @@ const SEG_NUMS={0:[1,1,1,1,1,1,0],1:[0,1,1,0,0,0,0],2:[1,1,0,1,1,0,1],3:[1,1,1,1
 let currentList='long',longData={},shortData={},shared={},longLog=[],shortLog=[];
 let currentOfficer=null,sessionExpiry=0;
 let pendingAction=null,pendingOfferingId=null,pendingPauseId=null,sheetEmpId=null;
-let pinOfficerIdx=null,pinEntered=[],changePinIdx=null,pinAttempts=0;
+let pinEntered=[],pinAttempts=0;
 let dragIdx=null,saveTimer=null,logSaveTimer=null,timerInterval=null;
 let sortKey='ts',sortDir=-1,logPage=1,logPerPage=25,lastUpdated=null;
 let darkMode=localStorage.getItem('ncems_dark')==='1';
@@ -611,7 +617,8 @@ const setLL=a=>{if(currentList==='long')longLog=a;else shortLog=a;};
 const offerTo=()=>currentList==='long'?LONG_TO:SHORT_TO;
 const activeBin=()=>currentList==='long'?LONG_BIN:SHORT_BIN;
 const activeLogBin=()=>currentList==='long'?LONG_LOG:SHORT_LOG;
-const isAdmin=()=>currentOfficer&&currentOfficer.isAdmin;
+const isAdmin=()=>isLoggedIn()&&currentOfficer.role==='admin';
+const isOfficer=()=>isLoggedIn()&&(currentOfficer.role==='officer'||currentOfficer.role==='admin');
 const isLoggedIn=()=>Date.now()<sessionExpiry&&currentOfficer!==null;
 const officerName=()=>currentOfficer?currentOfficer.name:'';
 const isMobile=()=>window.innerWidth<=640;
@@ -648,7 +655,7 @@ function renderCalendar(){
   for(let day=1;day<=days;day++){
     const d=new Date(calMonth.getFullYear(),calMonth.getMonth(),day),ds=calDs(d);
     const core=coreOnDuty(ds);
-    const edit=isLoggedIn();
+    const edit=isOfficer();
     const bar=x=>{const g=/^[XYR]$/.test(x.slot)?'xyr':/^[ABC]$/.test(x.slot)?'abc':/^F/.test(x.slot)?'flex':'bc';return '<div class="core-bar cb-'+g+'" title="'+esc(x.note)+'"><span class="cb-sl">'+esc(x.slot)+'</span>'+esc(x.name)+'</div>';};
     const coreBody=core.length?'<div class="cal-corebody" id="cbd-'+ds+'">'+core.map(bar).join('')+'</div>':'';
     const coreChip=core.length?'<span class="core-chip" onclick="toggleCoreDay(event,\''+ds+'\')">CORE</span>':'';
@@ -685,7 +692,7 @@ function toggleCoreRow(ev,id){ev.stopPropagation();const b=document.getElementBy
 function acEligible(){return (shared.acEligible&&shared.acEligible.length?shared.acEligible:['Josh Robertson','Stephen Schutts']);}
 function isAcEligible(name){if(!name)return false;const n=String(name).trim().toLowerCase();return acEligible().some(e=>{const c=String(e).trim().toLowerCase();return c===n||c.split(' ')[0]===n||n.split(' ')[0]===c.split(' ')[0]&&c.includes(n.split(' ')[0]);});}
 function calToggle(ds,unit){
-  if(!isLoggedIn()){showToast('Log in to edit shifts');return;}
+  if(!isOfficer()){showToast('Officer login required to edit shifts');return;}
   const sh=calShiftFor(ds,unit);
   if(sh){
     const off=calOfferingFor(sh.id);
@@ -812,11 +819,13 @@ let stTimer=null;
 function showStatus(msg,type,dur=0){const b=document.getElementById('status-bar');b.textContent='';b.className=`status-bar ${type}`;const i=document.createElement('i');i.className=type==='loading'?'ti ti-loader':type==='saving'?'ti ti-cloud-upload':type==='error'?'ti ti-alert-circle':'ti ti-check';b.appendChild(i);b.appendChild(document.createTextNode(' '+msg));b.style.display='flex';clearTimeout(stTimer);if(dur>0)stTimer=setTimeout(()=>b.style.display='none',dur);}
 
 // JSONBIN
+async function loadAuthUsers(){try{const r=await fetch(AUTH_API+'users');const j=await r.json();authUsers=j.users||[];authInitialized=!!j.initialized;}catch(e){authUsers=authUsers||[];}}
+let authInitialized=false;
 async function fetchBin(id){const r=await fetch(binUrl(id));if(!r.ok)throw new Error(r.status);return(await r.json())||{};}
-async function putBin(id,data,ka){const r=await fetch(binUrl(id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),keepalive:!!ka});if(!r.ok)throw new Error(r.status);}
+async function putBin(id,data,ka){const h={'Content-Type':'application/json'};if(authToken)h['Authorization']='Bearer '+authToken;const r=await fetch(binUrl(id),{method:'PUT',headers:h,body:JSON.stringify(data),keepalive:!!ka});if(!r.ok){if(r.status===401&&authToken){authToken='';sessionExpiry=0;currentOfficer=null;applyAuth();showToast('Session expired — please log in again');}throw new Error(r.status);}}
 async function saveActiveList(ka){showStatus('Saving...','saving');try{const s={...L()};delete s.log;await putBin(activeBin(),s,ka);lastUpdated=new Date();updateLastUpdated();showStatus('Saved','success',1500);}catch(e){showStatus('Save failed — tap Refresh','error',4000);}}
 async function saveActiveLog(ka){try{const lg=LL();if(lg.length>300)lg.splice(0,lg.length-300);await putBin(activeLogBin(),{log:lg},ka);}catch(e){showStatus('Log save failed','error',3000);}}
-async function saveShared(){longData.supervisors=shared.supervisors;longData.shifts=shared.shifts;longData.passReasons=shared.passReasons;longData.reorderReasons=shared.reorderReasons;longData.pauseReasons=shared.pauseReasons;longData.adminPassword=shared.adminPassword;longData.defaultDark=shared.defaultDark;longData.smsTemplate=shared.smsTemplate;longData.takeShiftSms=shared.takeShiftSms;longData.officers=shared.officers;longData.units=shared.units;longData.rotationSlots=shared.rotationSlots;longData.acEligible=shared.acEligible;longData.smsTemplate3rd=shared.smsTemplate3rd;longData.smsTemplateAC=shared.smsTemplateAC;longData.openShifts=shared.openShifts;['adminPassword','supervisors','shifts','passReasons','reorderReasons','pauseReasons','defaultDark','smsTemplate','takeShiftSms','officers','units','rotationSlots','acEligible','smsTemplate3rd','smsTemplateAC','openShifts'].forEach(k=>delete shortData[k]);const ls={...longData};delete ls.log;const ss={...shortData};delete ss.log;await Promise.all([putBin(LONG_BIN,ls),putBin(SHORT_BIN,ss)]);}
+async function saveShared(){longData.supervisors=shared.supervisors;longData.shifts=shared.shifts;longData.passReasons=shared.passReasons;longData.reorderReasons=shared.reorderReasons;longData.pauseReasons=shared.pauseReasons;longData.defaultDark=shared.defaultDark;longData.smsTemplate=shared.smsTemplate;longData.takeShiftSms=shared.takeShiftSms;longData.officers=(shared.officers||[]).map(o=>({name:o.name,phone:o.phone||'',lastLogin:o.lastLogin||null}));longData.units=shared.units;longData.rotationSlots=shared.rotationSlots;longData.acEligible=shared.acEligible;longData.smsTemplate3rd=shared.smsTemplate3rd;longData.smsTemplateAC=shared.smsTemplateAC;longData.openShifts=shared.openShifts;['adminPassword','supervisors','shifts','passReasons','reorderReasons','pauseReasons','defaultDark','smsTemplate','takeShiftSms','officers','units','rotationSlots','acEligible','smsTemplate3rd','smsTemplateAC','openShifts'].forEach(k=>delete shortData[k]);const ls={...longData};delete ls.log;delete ls.adminPassword;const ss={...shortData};delete ss.log;await Promise.all([putBin(LONG_BIN,ls),putBin(SHORT_BIN,ss)]);}
 function scheduleSave(){clearTimeout(saveTimer);savePending=true;saveTimer=setTimeout(()=>{savePending=false;saveActiveList();},800);}
 function scheduleLogSave(){clearTimeout(logSaveTimer);logSavePending=true;logSaveTimer=setTimeout(()=>{logSavePending=false;saveActiveLog();},800);}
 function flushSaves(){if(savePending){clearTimeout(saveTimer);savePending=false;saveActiveList(true);}if(logSavePending){clearTimeout(logSaveTimer);logSavePending=false;saveActiveLog(true);}if(sharedSavePending){clearTimeout(sharedSaveTimer);sharedSavePending=false;saveShared().catch(()=>{});}}
@@ -825,16 +834,16 @@ function closeAnyModal(bg){bg.classList.remove('open');if(bg.id==='offering-moda
 document.addEventListener('click',e=>{const t=e.target;if(t.classList&&t.classList.contains('modal-bg')&&t.classList.contains('open'))closeAnyModal(t);},true);
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;const open=[...document.querySelectorAll('.modal-bg.open')];if(open.length)closeAnyModal(open[open.length-1]);});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){flushSaves();}else if(!savePending&&!logSavePending&&!sharedSavePending&&lastUpdated&&Date.now()-lastUpdated.getTime()>60000){refreshData();}});
-async function refreshData(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();showStatus('Data loaded','success',1500);applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}catch(e){showStatus('Could not load data','error',0);}}
+async function refreshData(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();showStatus('Data loaded','success',1500);applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}catch(e){showStatus('Could not load data','error',0);}}
 function updateLastUpdated(){if(!lastUpdated)return;document.getElementById('last-updated').textContent='Updated '+lastUpdated.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 
 // INIT
-function extractShared(){shared={adminPassword:longData.adminPassword||'12345678',officers:longData.officers||[{name:'Officer 1',username:'officer1',pin:'1234',phone:'',lastLogin:null},{name:'Officer 2',username:'officer2',pin:'1234',phone:'',lastLogin:null},{name:'Officer 3',username:'officer3',pin:'1234',phone:'',lastLogin:null}],supervisors:longData.supervisors||['Officer 1','Officer 2','Officer 3'],shifts:longData.shifts||['A','B','C','X','Y','R','Float','X1','X2','Y1','Y2','R1','R2'],passReasons:longData.passReasons||['Not available','On vacation','On leave','Declined','No answer','Other'],reorderReasons:longData.reorderReasons||['Initial setup','Correction of error','Returning from leave','Labor agreement reset','Administrative adjustment','Other'],pauseReasons:longData.pauseReasons||['Vacation','Medical leave','Personal leave','FMLA','Suspension','Other'],defaultDark:longData.defaultDark,smsTemplate:longData.smsTemplate||DEFAULT_SMS,takeShiftSms:longData.takeShiftSms||'Hi {officer}, I would like to take the {unit} {type} shift on {day} {date}. Please let me know if it is still available.',units:longData.units||['M51','M52','M53','M54'],rotationSlots:longData.rotationSlots||{},acEligible:longData.acEligible||['Josh Robertson','Stephen Schutts'],smsTemplate3rd:longData.smsTemplate3rd||DEFAULT_SMS_3RD,smsTemplateAC:longData.smsTemplateAC||DEFAULT_SMS_AC,openShifts:longData.openShifts||[]};if(shared.defaultDark!==undefined&&localStorage.getItem('ncems_dark')===null){darkMode=shared.defaultDark;applyDark();}}
+function extractShared(){shared={officers:(longData.officers||[{name:'Officer 1',phone:'',lastLogin:null},{name:'Officer 2',phone:'',lastLogin:null},{name:'Officer 3',phone:'',lastLogin:null}]).map(o=>({name:o.name,phone:o.phone||'',lastLogin:o.lastLogin||null})),supervisors:longData.supervisors||['Officer 1','Officer 2','Officer 3'],shifts:longData.shifts||['A','B','C','X','Y','R','Float','X1','X2','Y1','Y2','R1','R2'],passReasons:longData.passReasons||['Not available','On vacation','On leave','Declined','No answer','Other'],reorderReasons:longData.reorderReasons||['Initial setup','Correction of error','Returning from leave','Labor agreement reset','Administrative adjustment','Other'],pauseReasons:longData.pauseReasons||['Vacation','Medical leave','Personal leave','FMLA','Suspension','Other'],defaultDark:longData.defaultDark,smsTemplate:longData.smsTemplate||DEFAULT_SMS,takeShiftSms:longData.takeShiftSms||'Hi {officer}, I would like to take the {unit} {type} shift on {day} {date}. Please let me know if it is still available.',units:longData.units||['M51','M52','M53','M54'],rotationSlots:longData.rotationSlots||{},acEligible:longData.acEligible||['Josh Robertson','Stephen Schutts'],smsTemplate3rd:longData.smsTemplate3rd||DEFAULT_SMS_3RD,smsTemplateAC:longData.smsTemplateAC||DEFAULT_SMS_AC,openShifts:longData.openShifts||[]};if(shared.defaultDark!==undefined&&localStorage.getItem('ncems_dark')===null){darkMode=shared.defaultDark;applyDark();}}
 function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.currentOffering=null;d.employees.forEach(e=>{if(e.available===undefined)e.available=true;['acceptCount','passCount','recentPassExpiry','recentAcceptExpiry','todayPassCount'].forEach(k=>{if(!e[k])e[k]=0;});if(!e.phone)e.phone='';if(!e.todayPassDate)e.todayPassDate='';if(!e.pauseReason)e.pauseReason='';if(e.todayPassDate!==new Date().toDateString()){e.todayPassCount=0;e.todayPassDate=new Date().toDateString();}});}
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
 function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
@@ -846,51 +855,58 @@ function applyListUI(){const g=currentList==='long';document.getElementById('btn
 // AUTH
 function openAuthFlow(){closeAuthScreens();showOfficerSelect();}
 function closeAuthScreens(){['screen-officers','screen-pin','screen-admin'].forEach(id=>document.getElementById(id).classList.remove('open'));}
-function showOfficerSelect(){closeAuthScreens();const list=document.getElementById('officer-list');list.innerHTML='';(shared.officers||[]).forEach((o,i)=>{const btn=document.createElement('button');btn.className='officer-btn';btn.innerHTML=`<span>${esc(o.name)}</span><i class="ti ti-chevron-right" style="color:var(--text3)"></i>`;btn.onclick=()=>showPinPad(i);list.appendChild(btn);});document.getElementById('screen-officers').classList.add('open');}
-function showPinPad(idx){pinOfficerIdx=idx;pinEntered=[];pinAttempts=0;document.getElementById('pin-name').textContent=shared.officers[idx].name;document.getElementById('pin-error').textContent='';updatePinDisplay();closeAuthScreens();document.getElementById('screen-pin').classList.add('open');}
-function showAdminLogin(){closeAuthScreens();document.getElementById('adm-user').value='';document.getElementById('adm-pass').value='';document.getElementById('adm-err').style.display='none';document.getElementById('screen-admin').classList.add('open');setTimeout(()=>document.getElementById('adm-user').focus(),300);}
-function submitAdminLogin(){const u=document.getElementById('adm-user').value.trim(),p=document.getElementById('adm-pass').value;if(u===ADMIN_USER&&p===shared.adminPassword){currentOfficer={name:'Admin',username:'admin',isAdmin:true};sessionExpiry=Date.now()+SESSION_MS;closeAuthScreens();applyAuth();LL().push({name:'— Login —',action:'reorder',shift:'',shiftDate:'',supervisor:'Admin',reason:'',notes:'Admin logged in',ts:Date.now()});scheduleLogSave();showToast('Logged in as Admin');}else{document.getElementById('adm-err').style.display='block';}}
-function confirmPin(){
-  if(pinEntered.length<4){shakePinDisplay();document.getElementById('pin-error').textContent='Enter all 4 digits';return;}
-  const o=shared.officers[pinOfficerIdx];
-  if(pinEntered.join('')===String(o.pin)){
-    pinAttempts=0;
-    flashSuccess();
-    setTimeout(()=>{
-      currentOfficer={name:o.name,username:o.username,isAdmin:false,index:pinOfficerIdx};
-      sessionExpiry=Date.now()+SESSION_MS;
-      o.lastLogin=Date.now();
-      saveShared();
-      closeAuthScreens();applyAuth();
-      LL().push({name:o.name,action:'login',shift:'',shiftDate:'',supervisor:o.name,reason:'',notes:'Officer login',ts:Date.now()});
-      scheduleLogSave();
-      showToast(`Welcome, ${o.name}`);
-    },900);
-  }else{
-    shakePinDisplay();
-    setTimeout(()=>{pinEntered=[];flashError();},150);
-  }
+function showOfficerSelect(){closeAuthScreens();const list=document.getElementById('officer-list');
+  const render=()=>{
+    list.innerHTML='';
+    if(!authInitialized||!authUsers||!authUsers.length){list.innerHTML='<div style="font-size:13px;color:var(--text3);padding:10px">Logins not set up yet — use Admin login below.</div>';return;}
+    const groups=[['Officers & BCs',authUsers.filter(u=>u.role!=='crew')],['Crew',authUsers.filter(u=>u.role==='crew')]];
+    groups.forEach(g=>{
+      if(!g[1].length)return;
+      const h=document.createElement('div');h.style.cssText='font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:10px 0 6px;width:100%';h.textContent=g[0];list.appendChild(h);
+      const grid=document.createElement('div');grid.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%';
+      g[1].sort((a,b)=>a.name.localeCompare(b.name)).forEach(u=>{
+        const btn=document.createElement('button');btn.className='officer-btn';btn.style.margin='0';
+        btn.innerHTML='<span>'+esc(u.name)+'</span>';
+        btn.onclick=()=>showPinPadFor(u.name);
+        grid.appendChild(btn);
+      });
+      list.appendChild(grid);
+    });
+  };
+  if(authUsers===null){list.innerHTML='<div style="font-size:13px;color:var(--text3);padding:10px">Loading…</div>';loadAuthUsers().then(render);}
+  else render();
+  document.getElementById('screen-officers').classList.add('open');
 }
-function doLogout(){sessionExpiry=0;currentOfficer=null;if(document.getElementById('tab-admin').classList.contains('active'))showTab('list');applyAuth();showToast('Logged out');}
+function showPinPadFor(name){selectedAuthName=name;pinEntered=[];pinAttempts=0;document.getElementById('pin-name').textContent=name;document.getElementById('pin-error').textContent='';updatePinDisplay();closeAuthScreens();document.getElementById('screen-pin').classList.add('open');}
+function showAdminLogin(){closeAuthScreens();document.getElementById('adm-user').value='';document.getElementById('adm-pass').value='';document.getElementById('adm-err').style.display='none';document.getElementById('screen-admin').classList.add('open');setTimeout(()=>document.getElementById('adm-user').focus(),300);}
+async function submitAdminLogin(){const u=document.getElementById('adm-user').value.trim(),p=document.getElementById('adm-pass').value;
+  if(u!==ADMIN_USER){document.getElementById('adm-err').style.display='block';return;}
+  let j=null;
+  try{const r=await fetch(AUTH_API+'adminlogin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:p})});j=await r.json();if(!r.ok)j=null;}catch(e){j=null;}
+  if(j&&j.token){authToken=j.token;currentOfficer={name:'Admin',role:'admin'};sessionExpiry=Date.now()+SESSION_MS;closeAuthScreens();applyAuth();LL().push({name:'— Login —',action:'login',shift:'',shiftDate:'',supervisor:'Admin',reason:'Admin login',notes:'Admin logged in',ts:Date.now()});scheduleLogSave();showToast('Admin logged in');}
+  else{document.getElementById('adm-err').style.display='block';}
+}
+function doLogout(){sessionExpiry=0;currentOfficer=null;authToken='';lastEnteredPin='';if(document.getElementById('tab-admin').classList.contains('active'))showTab('list');applyAuth();showToast('Logged out');}
 function applyAuth(){
   const li=isLoggedIn(),adm=isAdmin();
   if(shiftsView==='cal')renderCalendar();
   document.getElementById('login-btn').style.display=li?'none':'inline-flex';
   document.getElementById('logout-btn').style.display=li?'inline-flex':'none';
+  const spb=document.getElementById('selfpin-btn');if(spb)spb.style.display=(li&&currentOfficer.name!=='Admin')?'inline-flex':'none';
   const ls=document.getElementById('login-status');
   if(li){ls.style.display='flex';ls.innerHTML=`<i class="ti ti-shield-check"></i> ${esc(currentOfficer.name)}${adm?' <span style="font-size:10px;background:var(--green);color:#fff;padding:1px 5px;border-radius:3px;margin-left:3px">ADMIN</span>':''}`;}
   else ls.style.display='none';
-  document.getElementById('admin-tab').style.display=li?'inline-block':'none';
-  document.getElementById('stats-tab').style.display=li?'inline-block':'none';
-  const sn=document.getElementById('nav-stats');if(sn)sn.style.display=li?'flex':'none';
+  document.getElementById('admin-tab').style.display=isOfficer()?'inline-block':'none';
+  document.getElementById('stats-tab').style.display=isOfficer()?'inline-block':'none';
+  const sn=document.getElementById('nav-stats');if(sn)sn.style.display=isOfficer()?'flex':'none';
   const ab=document.getElementById('archive-btn');if(ab)ab.style.display=isAdmin()?'inline-flex':'none';
-  const soa=document.getElementById('shifts-officer-actions');if(soa)soa.style.display=li?'block':'none';
+  const soa=document.getElementById('shifts-officer-actions');if(soa)soa.style.display=isOfficer()?'inline-flex':'none';
   const ron=document.getElementById('readonly-shifts-notice');if(ron)ron.style.display=li?'none':'flex';
   document.getElementById('readonly-notice').style.display=li?'none':'flex';
   document.getElementById('readonly-log-notice').style.display=li?'none':'flex';
   document.getElementById('log-actions-chief').style.display=li?'flex':'none';
   const an=document.getElementById('nav-admin'),lm=document.getElementById('nav-login-m');
-  if(an)an.classList.toggle('visible',li);
+  if(an)an.classList.toggle('visible',isOfficer());
   if(lm)lm.style.display=li?'none':'flex';
   // Admin-only elements
   document.querySelectorAll('.admin-only').forEach(el=>{
@@ -941,7 +957,28 @@ function shakePinDisplay(){const r=document.getElementById('seg-row');if(!r)retu
 function animKey(btn){btn.style.background=keyPressBg();btn.style.color=keyPressClr();btn.style.transform='scale(0.91)';clearTimeout(btn._t);btn._t=setTimeout(()=>{btn.style.background=keyRestBg();btn.style.color=keyRestClr();btn.style.transform='scale(1)';},130);}
 function buildPinKeypad(){const kp=document.getElementById('pin-keypad');if(!kp)return;kp.innerHTML='';['1','2','3','4','5','6','7','8','9','','0','⌫'].forEach(k=>{const btn=document.createElement('button');btn.className='pin-key';btn.style.background=keyRestBg();btn.style.color=keyRestClr();btn.style.boxShadow='0 2px 6px rgba(0,0,0,.2)';if(k===''){btn.style.background='transparent';btn.style.boxShadow='none';btn.disabled=true;btn.style.cursor='default';}else if(k==='⌫'){btn.style.fontSize='22px';btn.innerHTML='<i class="ti ti-backspace" style="font-size:22px"></i>';btn.onclick=()=>{if(!pinEntered.length)return;pinEntered.pop();updatePinDisplay();if(navigator.vibrate)navigator.vibrate(8);animKey(btn);};}else{btn.textContent=k;btn.onclick=()=>{if(pinEntered.length>=4)return;pinEntered.push(parseInt(k));updatePinDisplay();if(navigator.vibrate)navigator.vibrate(8);animKey(btn);};}kp.appendChild(btn);});}
 
-// OFFICER PIN CHANGE
+// LOGIN (Worker-verified)
+async function confirmPin(){
+  if(pinEntered.length!==4){shakePinDisplay();flashError();return;}
+  const pin=pinEntered.join('');
+  let j=null;
+  try{const r=await fetch(AUTH_API+'login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:selectedAuthName,pin})});j=await r.json();if(!r.ok)j=null;}catch(e){j=null;}
+  if(!j||!j.token){pinEntered=[];shakePinDisplay();flashError();return;}
+  flashSuccess();
+  authToken=j.token;lastEnteredPin=pin;
+  currentOfficer={name:selectedAuthName,role:j.role||'officer'};
+  sessionExpiry=Date.now()+SESSION_MS;
+  const o=(shared.officers||[]).find(x=>x.name===selectedAuthName);
+  LL().push({name:'— Login —',action:'login',shift:'',shiftDate:'',supervisor:selectedAuthName,reason:'',notes:selectedAuthName+' logged in',ts:Date.now()});
+  const wasMust=!!j.mustChange;
+  setTimeout(()=>{
+    closeAuthScreens();applyAuth();
+    if(o){o.lastLogin=Date.now();scheduleSharedSave();}
+    scheduleLogSave();
+    showToast('Logged in as '+selectedAuthName);
+    if(wasMust)openPinModal({mode:'forced',name:selectedAuthName});
+  },700);
+}
 
 // HELPERS
 function toggleMultiShift(){const m=document.getElementById('multi-toggle').checked;document.getElementById('single-fields').style.display=m?'none':'block';document.getElementById('manual-date-field').style.display=m?'none':'block';document.getElementById('multi-fields').style.display=m?'block':'none';}
@@ -954,7 +991,7 @@ function startOfferTimer(){
     const rem=of.expiresAt-Date.now();
     document.querySelectorAll('.otimer').forEach(t=>t.textContent=fmtCountdown(rem));
     if(rem<=0){
-      if(!isLoggedIn()){document.querySelectorAll('.otimer').forEach(t=>t.textContent='0:00');return;}
+      if(!isOfficer()){document.querySelectorAll('.otimer').forEach(t=>t.textContent='0:00');return;}
       const exp=L().currentOffering;L().currentOffering=null;
       if(exp){const idx=L().employees.findIndex(e=>e.id===exp.empId);if(idx>=0){const emp=L().employees[idx];emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();LL().push({name:emp.name,action:'pass',shift:exp.shift||'',shiftDate:exp.shiftDate||'',supervisor:exp.supervisor||'',reason:'No response',notes:'Offer expired — no response within time limit',ts:Date.now()});}
       const bar=document.getElementById('offering-bar');if(bar){bar.innerHTML=`<div class="owd" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><i class="ti ti-clock-off" style="font-size:16px;flex-shrink:0"></i><span>Offer to <strong>${esc(exp.empName)}</strong> expired — automatically logged as passed.</span></div><div class="owm" style="background:var(--red-light);border-color:var(--red);color:var(--red)"><span>Offer to <strong>${esc(exp.empName)}</strong> expired</span></div>`;setTimeout(()=>{if(bar)bar.innerHTML='';},10000);}}
@@ -1036,7 +1073,8 @@ function buildSms(emp,of){
   return t.replace(/{name}/g,firstName(emp?emp.name:'')).replace(/{officer}/g,of?of.supervisor:'').replace(/{shift}/g,shiftInfo).replace(/{date}/g,ds).replace(/{limit}/g,lim);
 }
 function sendSms(){const of=L().currentOffering;if(!of)return;const emp=L().employees.find(e=>e.id===of.empId);if(!emp||!emp.phone){showToast('No phone number on file');return;}window.location.href=`sms:${emp.phone}&body=${encodeURIComponent(buildSms(emp,of))}`;}
-function insertPlaceholder(t){const ta=document.getElementById('sms-tmpl');if(!ta)return;const s=ta.selectionStart,e=ta.selectionEnd;ta.value=ta.value.slice(0,s)+t+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+t.length;ta.focus();}
+function insertPh(id,t){const ta=document.getElementById(id);if(!ta)return;const s=ta.selectionStart,e=ta.selectionEnd;ta.value=ta.value.slice(0,s)+t+ta.value.slice(e);ta.selectionStart=ta.selectionEnd=s+t.length;ta.focus();}
+function insertPlaceholder(t){insertPh('sms-tmpl',t);}
 function saveSmsTemplate(){const v=document.getElementById('sms-tmpl').value.trim();if(!v){showToast('Template cannot be empty');return;}shared.smsTemplate=v;saveShared().then(()=>showToast('SMS template saved'));}
 function populateSmsTemplate(){const ta=document.getElementById('sms-tmpl');if(ta)ta.value=shared.smsTemplate||DEFAULT_SMS;const t3=document.getElementById('sms-tmpl-3rd');if(t3)t3.value=shared.smsTemplate3rd||DEFAULT_SMS_3RD;const tac=document.getElementById('sms-tmpl-ac');if(tac)tac.value=shared.smsTemplateAC||DEFAULT_SMS_AC;renderAcTags();}
 
@@ -1056,7 +1094,7 @@ function renderOfferingBanner(of,li){const bar=document.getElementById('offering
 
 // RENDER LIST
 function renderList(){
-  const li=isLoggedIn(),sh=isShort();
+  const li=isOfficer(),sh=isShort();
   const topBar=document.getElementById('top-bar'),con=document.getElementById('emp-list'),of=L().currentOffering;
   renderOfferingBanner(of,li);renderResetBar(li);
   const avail=L().employees.filter(e=>e.available!==false);
@@ -1073,7 +1111,7 @@ function renderList(){
     let rc='';if(!avl)rc='unavailable';else if(isOff)rc='offering';else if(isNext)rc=sh?'next-up-short':'next-up-long';
     return`<div class="emp-row ${rc}" data-emp-id="${e.id}">
       ${li&&avl?`<div class="swipe-bg-a"><i class="ti ti-check"></i> Accept</div><div class="swipe-bg-p">Pass <i class="ti ti-x"></i></div><div class="sedge-l"><i class="ti ti-check"></i></div><div class="sedge-r"><i class="ti ti-x"></i></div>`:''}
-      <div class="swipe-content" onclick="if(isMobile()&&isLoggedIn()&&!swipeData)openRowSheet(${e.id})">
+      <div class="swipe-content" onclick="if(isMobile()&&isOfficer()&&!swipeData)openRowSheet(${e.id})">
         <span class="rank ${isNext?(sh?'ts':'tl'):''}">${avl?rank:'—'}</span>
         <div class="avatar ${!avl?'unavailable':sh?'short':''}">${esc(initials(e.name))}</div>
         <div class="emp-info">
@@ -1096,7 +1134,7 @@ function renderList(){
 }
 
 // ROW SHEET
-function openRowSheet(id){if(!isLoggedIn())return;sheetEmpId=id;const emp=L().employees.find(e=>e.id===id);if(!emp)return;const avl=emp.available!==false;document.getElementById('sheet-name').textContent=emp.name;const ph=document.getElementById('sheet-phone');if(emp.phone){ph.innerHTML=`<a href="sms:${esc(emp.phone)}" style="color:var(--green);text-decoration:none"><i class="ti ti-message"></i> ${esc(emp.phone)}</a>`;ph.style.display='block';}else ph.style.display='none';document.getElementById('sheet-pause-lbl').textContent=avl?'Pause / Mark unavailable':'Unpause / Mark available';document.getElementById('sheet-pause').querySelector('i').className=`ti ti-${avl?'player-pause':'player-play'}`;document.getElementById('sheet-offer').style.display=avl?'flex':'none';document.getElementById('sheet-accept').style.display=avl?'flex':'none';document.getElementById('sheet-pass').style.display=avl?'flex':'none';document.getElementById('row-sheet').classList.add('open');}
+function openRowSheet(id){if(!isOfficer())return;sheetEmpId=id;const emp=L().employees.find(e=>e.id===id);if(!emp)return;const avl=emp.available!==false;document.getElementById('sheet-name').textContent=emp.name;const ph=document.getElementById('sheet-phone');if(emp.phone){ph.innerHTML=`<a href="sms:${esc(emp.phone)}" style="color:var(--green);text-decoration:none"><i class="ti ti-message"></i> ${esc(emp.phone)}</a>`;ph.style.display='block';}else ph.style.display='none';document.getElementById('sheet-pause-lbl').textContent=avl?'Pause / Mark unavailable':'Unpause / Mark available';document.getElementById('sheet-pause').querySelector('i').className=`ti ti-${avl?'player-pause':'player-play'}`;document.getElementById('sheet-offer').style.display=avl?'flex':'none';document.getElementById('sheet-accept').style.display=avl?'flex':'none';document.getElementById('sheet-pass').style.display=avl?'flex':'none';document.getElementById('row-sheet').classList.add('open');}
 function closeRowSheet(){document.getElementById('row-sheet').classList.remove('open');sheetEmpId=null;}
 function sheetOffer(){const id=sheetEmpId;closeRowSheet();openOfferingModal(id);}
 function sheetAccept(){const id=sheetEmpId;closeRowSheet();openModal(id,'accept');}
@@ -1104,7 +1142,7 @@ function sheetPass(){const id=sheetEmpId;closeRowSheet();openModal(id,'pass');}
 function sheetPause(){const id=sheetEmpId;closeRowSheet();const emp=L().employees.find(e=>e.id===id);if(!emp)return;if(emp.available!==false)openPauseModal(id);else unPause(id);}
 
 // SWIPE
-function initSwipe(){document.addEventListener('touchstart',e=>{const row=e.target.closest('.emp-row[data-emp-id]');if(!row||!isLoggedIn())return;swipeData={row,sx:e.touches[0].clientX,sy:e.touches[0].clientY,dx:0,locked:false,cancelled:false};},{passive:true});document.addEventListener('touchmove',e=>{if(!swipeData||swipeData.cancelled)return;const dx=e.touches[0].clientX-swipeData.sx,dy=e.touches[0].clientY-swipeData.sy;if(!swipeData.locked){if(Math.abs(dy)>Math.abs(dx)){swipeData.cancelled=true;return;}if(Math.abs(dx)>8)swipeData.locked=true;}if(!swipeData.locked)return;e.preventDefault();swipeData.dx=dx;const c=swipeData.row.querySelector('.swipe-content'),ba=swipeData.row.querySelector('.swipe-bg-a'),bp=swipeData.row.querySelector('.swipe-bg-p'),el=swipeData.row.querySelector('.sedge-l'),er=swipeData.row.querySelector('.sedge-r');if(!c)return;const cl=Math.max(-120,Math.min(120,dx));c.style.transform=`translateX(${cl}px)`;c.style.transition='none';if(ba)ba.style.opacity=dx>20?Math.min(1,(dx-20)/60):0;if(bp)bp.style.opacity=dx<-20?Math.min(1,(-dx-20)/60):0;if(el)el.classList.toggle('show-icon',dx>15);if(er)er.classList.toggle('show-icon',dx<-15);},{passive:false});document.addEventListener('touchend',()=>{if(!swipeData||swipeData.cancelled||!swipeData.locked){swipeData=null;return;}const{row,dx}=swipeData;const c=row.querySelector('.swipe-content'),ba=row.querySelector('.swipe-bg-a'),bp=row.querySelector('.swipe-bg-p'),el=row.querySelector('.sedge-l'),er=row.querySelector('.sedge-r');if(c){c.style.transition='transform .2s';c.style.transform='translateX(0)';}if(ba)ba.style.opacity=0;if(bp)bp.style.opacity=0;if(el)el.classList.remove('show-icon');if(er)er.classList.remove('show-icon');const eid=parseInt(row.dataset.empId);if(dx>80)openModal(eid,'accept');else if(dx<-80)openModal(eid,'pass');swipeData=null;},{passive:true});}
+function initSwipe(){document.addEventListener('touchstart',e=>{const row=e.target.closest('.emp-row[data-emp-id]');if(!row||!isOfficer())return;swipeData={row,sx:e.touches[0].clientX,sy:e.touches[0].clientY,dx:0,locked:false,cancelled:false};},{passive:true});document.addEventListener('touchmove',e=>{if(!swipeData||swipeData.cancelled)return;const dx=e.touches[0].clientX-swipeData.sx,dy=e.touches[0].clientY-swipeData.sy;if(!swipeData.locked){if(Math.abs(dy)>Math.abs(dx)){swipeData.cancelled=true;return;}if(Math.abs(dx)>8)swipeData.locked=true;}if(!swipeData.locked)return;e.preventDefault();swipeData.dx=dx;const c=swipeData.row.querySelector('.swipe-content'),ba=swipeData.row.querySelector('.swipe-bg-a'),bp=swipeData.row.querySelector('.swipe-bg-p'),el=swipeData.row.querySelector('.sedge-l'),er=swipeData.row.querySelector('.sedge-r');if(!c)return;const cl=Math.max(-120,Math.min(120,dx));c.style.transform=`translateX(${cl}px)`;c.style.transition='none';if(ba)ba.style.opacity=dx>20?Math.min(1,(dx-20)/60):0;if(bp)bp.style.opacity=dx<-20?Math.min(1,(-dx-20)/60):0;if(el)el.classList.toggle('show-icon',dx>15);if(er)er.classList.toggle('show-icon',dx<-15);},{passive:false});document.addEventListener('touchend',()=>{if(!swipeData||swipeData.cancelled||!swipeData.locked){swipeData=null;return;}const{row,dx}=swipeData;const c=row.querySelector('.swipe-content'),ba=row.querySelector('.swipe-bg-a'),bp=row.querySelector('.swipe-bg-p'),el=row.querySelector('.sedge-l'),er=row.querySelector('.sedge-r');if(c){c.style.transition='transform .2s';c.style.transform='translateX(0)';}if(ba)ba.style.opacity=0;if(bp)bp.style.opacity=0;if(el)el.classList.remove('show-icon');if(er)er.classList.remove('show-icon');const eid=parseInt(row.dataset.empId);if(dx>80)openModal(eid,'accept');else if(dx<-80)openModal(eid,'pass');swipeData=null;},{passive:true});}
 
 // LOG
 function renderShiftFilter(){/* shift labels removed in v2.0 */}
@@ -1119,19 +1157,19 @@ function resetFilters(){document.getElementById('filter-name').value='';document
 function renderLog(){const fil=getFilteredLog(),total=(LL()||[]).length;logPage=Math.max(1,Math.min(logPage,totalPages()));const start=(logPage-1)*logPerPage,paged=fil.slice(start,start+logPerPage);document.getElementById('log-count').textContent=fil.length!==total?`${fil.length} of ${total} entries`:total?`${total} entr${total===1?'y':'ies'}`:'';const tp=totalPages(),pi=document.getElementById('pagination-info'),pg=document.getElementById('page-indicator');if(pi)pi.textContent=fil.length?`Showing ${start+1}–${Math.min(start+logPerPage,fil.length)} of ${fil.length}`:'';if(pg)pg.textContent=`${logPage} / ${tp}`;const pf=document.getElementById('page-first'),pp=document.getElementById('page-prev'),pn=document.getElementById('page-next'),pl=document.getElementById('page-last');if(pf)pf.disabled=logPage===1;if(pp)pp.disabled=logPage===1;if(pn)pn.disabled=logPage===tp;if(pl)pl.disabled=logPage===tp;const tbody=document.getElementById('log-body'),bm={accept:'accept',pass:'pass',skip:'skip',reorder:'reorder',download:'download',pause:'pause',login:'login',reset:'reset',shift:'shift'};if(!fil.length){tbody.innerHTML=`<tr><td colspan="7" style="color:var(--text3);font-style:italic;padding:14px 10px">${total?'No entries match filters':'No entries yet'}</td></tr>`;}else{tbody.innerHTML=paged.map(l=>`<tr><td style="font-weight:500;white-space:nowrap">${esc(l.name)}</td><td><span class="badge badge-${bm[l.action]||'reorder'}">${l.action}</span></td><td>${l.shift?`<span class="badge badge-shift">${l.shift}</span>`:'—'}</td><td style="color:var(--text2);white-space:nowrap">${fmtDate(l.shiftDate)}</td><td style="color:var(--text2);white-space:nowrap">${esc(l.supervisor||'—')}</td><td style="color:var(--text2)">${l.reason?`<span style="color:var(--amber)">${esc(l.reason)}</span>${l.notes?' — '+esc(l.notes):''}`:esc(l.notes||'—')}</td><td style="color:var(--text3);white-space:nowrap;font-size:12px">${fmtTs(l.ts)}</td></tr>`).join('');}const acc=(LL()||[]).filter(l=>l.action==='accept').length,pas=(LL()||[]).filter(l=>l.action==='pass').length;document.getElementById('stat-cards').innerHTML=`<div class="stat-card"><div class="lbl">Total offers</div><div class="val">${total}</div></div><div class="stat-card"><div class="lbl">Accepted</div><div class="val" style="color:var(--green)">${acc}</div></div><div class="stat-card"><div class="lbl">Passed</div><div class="val" style="color:var(--red)">${pas}</div></div><div class="stat-card"><div class="lbl">Accept rate</div><div class="val">${total?Math.round(acc/total*100):0}%</div></div>`;}
 
 // ADMIN
-function renderAdmin(){renderRotation();const li=isLoggedIn(),adm=isAdmin();document.getElementById('admin-locked').style.display=li?'none':'block';document.getElementById('admin-content').style.display=li?'block':'none';if(!li)return;
+function renderAdmin(){renderRotation();const li=isOfficer(),adm=isAdmin();document.getElementById('admin-locked').style.display=li?'none':'block';document.getElementById('admin-content').style.display=li?'block':'none';if(!li)return;
 // Paramedics
 document.getElementById('admin-list').innerHTML=L().employees.map((e,i)=>{const avl=e.available!==false;return`<div class="emp-row drag-row ${!avl?'unavailable':''}" draggable="true" ondragstart="dragStart(event,${i})" ondragover="dragOver(event)" ondrop="dragDrop(event,${i})"><span class="rank drag-handle"><i class="ti ti-grip-vertical" style="color:var(--text3)"></i></span><div class="reorder-btns"><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},-1)" ${i===0?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-up"></i></button><button class="btn btn-muted btn-sm" onclick="moveEmp(${i},1)" ${i===L().employees.length-1?'disabled':''} style="padding:3px 6px"><i class="ti ti-chevron-down"></i></button></div><div class="avatar ${!avl?'unavailable':isShort()?'short':''}" id="ea-${e.id}">${esc(initials(e.name))}</div><div style="flex:1;display:flex;flex-direction:column;gap:4px;min-width:0"><input class="inline-input" value="${esc(e.name)}" id="en-${e.id}" oninput="markDirty(${e.id})" onkeydown="if(event.key==='Enter')saveEmpName(${e.id})" placeholder="Name"/><input class="inline-input-sm" value="${esc(e.phone||'')}" id="ep-${e.id}" oninput="markDirty(${e.id})" placeholder="Phone"/></div><button class="btn btn-accept btn-sm" id="es-${e.id}" onclick="saveEmpName(${e.id})" style="display:none"><i class="ti ti-check"></i></button><button class="btn btn-sm ${avl?'btn-muted':'btn-accept'}" onclick="${avl?`openPauseModal(${e.id})`:`unPause(${e.id})`}"><i class="ti ti-${avl?'player-pause':'player-play'}"></i></button><button class="btn btn-pass btn-sm" onclick="removeEmployee(${e.id})"><i class="ti ti-trash"></i></button></div>`;}).join('');
 // Officers list
 if(adm){
   document.getElementById('officers-list').innerHTML=(shared.officers||[]).map((o,i)=>{
-    const activeSession=currentOfficer&&!currentOfficer.isAdmin&&currentOfficer.index===i&&isLoggedIn();
-    const hasCustomPin=o.pin&&o.pin!=='1234';
-    const pinTxt=hasCustomPin?'Change PIN':'Set PIN';
-    const pinIcon=hasCustomPin?'ti-lock':'ti-lock-open';
-    const pinCls=hasCustomPin?'btn-muted':'btn-warn';
-    const pinStatusTxt=hasCustomPin?'✓ PIN set':'⚠ Default PIN';
-    const pinStatusClr=hasCustomPin?'var(--green)':'var(--amber)';
+    const au=(authUsers||[]).find(u=>u.name===o.name);
+    const activeSession=isLoggedIn()&&currentOfficer&&currentOfficer.name===o.name;
+    const pinTxt=au?'Reset PIN':'Enable login';
+    const pinIcon=au?'ti-lock':'ti-lock-open';
+    const pinCls=au?'btn-muted':'btn-warn';
+    const pinStatusTxt=au?(au.mustChange?'⚠ Temp PIN (must change)':'✓ Login active'):'⚠ No login yet';
+    const pinStatusClr=(au&&!au.mustChange)?'var(--green)':'var(--amber)';
     const dotHtml=activeSession?'<div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0"></div>':'<div style="width:7px;flex-shrink:0"></div>';
     const loginTxt=o.lastLogin?'Last login: '+fmtTs(o.lastLogin):'Never logged in';
     return'<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border2)">'
@@ -1145,18 +1183,18 @@ if(adm){
         +'<div style="font-size:10px;color:var(--text3)">'+loginTxt+'</div>'
       +'</div>'
       +'<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch">'
-        +'<button class="btn btn-sm '+pinCls+'" onclick="openPinChange('+i+')" style="white-space:nowrap"><i class="ti '+pinIcon+'"></i> '+pinTxt+'</button>'
+        +'<button class="btn btn-sm '+pinCls+'" onclick="openPinModal({mode:\'admin\',name:\''+jstr(o.name)+'\',role:\''+((au&&au.role)||'officer')+'\'})" style="white-space:nowrap"><i class="ti '+pinIcon+'"></i> '+pinTxt+'</button>'
         +'<button class="btn btn-sm btn-pass" onclick="removeOfficer('+i+')" style="justify-content:center"><i class="ti ti-trash"></i></button>'
       +'</div>'
       +'</div>';
   }).join('');
   // Set input values after rendering (avoids placeholder collision)
   (shared.officers||[]).forEach((o,i)=>{
-    const n=document.getElementById('on-'+i),u=document.getElementById('ou-'+i),ph=document.getElementById('oph-'+i);
+    const n=document.getElementById('on-'+i),ph=document.getElementById('oph-'+i);
     if(n)n.value=o.name;
-    if(u)u.value=o.username||'';
     if(ph)ph.value=o.phone||'';
   });
+  renderCrewLogins();
 }
 renderUnitTags();renderPassTags();renderReorderTags();renderPauseTags();updateDefaultModeUI();populateSmsTemplate();populateTakeSmsTemplate();}
 
@@ -1179,12 +1217,62 @@ function addEmployee(){const n=prompt('Paramedic name:');if(!n||!n.trim())return
 function removeEmployee(id){if(!confirm('Remove this paramedic?'))return;L().employees=L().employees.filter(e=>e.id!==id);scheduleSave();renderAdmin();renderList();}
 
 // OFFICER EDIT
-function addOfficer(){shared.officers.push({name:'New Officer',username:'officer'+Date.now(),pin:'1234',lastLogin:null});saveShared().then(()=>{renderAdmin();// Focus the new officer name field
+// CREW LOGINS (admin)
+function renderCrewLogins(){const el=document.getElementById('crewlogins-list');if(!el)return;
+  const officerNames=new Set((shared.officers||[]).map(o=>o.name));
+  const names=[];const seen=new Set();
+  [longData,shortData].forEach(d=>(d.employees||[]).forEach(e=>{if(e.name&&!officerNames.has(e.name)&&!seen.has(e.name)){seen.add(e.name);names.push(e.name);}}));
+  (authUsers||[]).forEach(u=>{if(u.role==='crew'&&!seen.has(u.name)&&!officerNames.has(u.name)){seen.add(u.name);names.push(u.name);}});
+  names.sort((a,b)=>a.localeCompare(b));
+  if(!names.length){el.innerHTML='<div style="font-size:13px;color:var(--text3)">No crew members found. Add paramedics to a list first.</div>';return;}
+  el.innerHTML=names.map(n=>{
+    const au=(authUsers||[]).find(u=>u.name===n);
+    const st=au?(au.mustChange?'⚠ Temp PIN (must change)':'✓ Login active'):'No login';
+    const stClr=au?((au.mustChange)?'var(--amber)':'var(--green)'):'var(--text3)';
+    return'<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2)">'
+      +'<div class="avatar">'+esc(initials(n))+'</div>'
+      +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">'+esc(n)+'</div><span style="font-size:10px;color:'+stClr+'">'+st+'</span></div>'
+      +'<div style="display:flex;gap:6px;flex-shrink:0">'
+        +'<button class="btn btn-sm '+(au?'btn-muted':'btn-warn')+'" onclick="openPinModal({mode:\'admin\',name:\''+jstr(n)+'\',role:\''+((au&&au.role)||'crew')+'\'})" style="white-space:nowrap"><i class="ti '+(au?'ti-lock':'ti-lock-open')+'"></i> '+(au?'Reset PIN':'Enable login')+'</button>'
+        +(au?'<button class="btn btn-sm btn-pass" onclick="removeCrewLogin(\''+jstr(n)+'\')" title="Remove login"><i class="ti ti-user-off"></i></button>':'')
+      +'</div>'
+    +'</div>';
+  }).join('');
+}
+async function removeCrewLogin(name){if(!confirm('Remove login for '+name+'? They will no longer be able to sign in.'))return;
+  try{const r=await fetch(AUTH_API+'removeuser',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({name})});const j=await r.json();if(!r.ok){showToast(j.error||'Remove failed');return;}showToast('Login removed');loadAuthUsers().then(()=>renderAdmin());}catch(e){showToast('Network error');}}
+function addOfficer(){shared.officers.push({name:'New Officer',phone:'',lastLogin:null});saveShared().then(()=>{renderAdmin();// Focus the new officer name field
 const idx=shared.officers.length-1;setTimeout(()=>{const n=document.getElementById('on-'+idx);if(n){n.select();}},100);});}
 function saveOfficerField(i){const n=document.getElementById('on-'+i),ph=document.getElementById('oph-'+i);if(!shared.officers[i])return;const newName=(n?n.value.trim():'')||shared.officers[i].name;shared.officers[i].name=newName;if(ph)shared.officers[i].phone=ph.value.trim();saveShared();}
 function removeOfficer(i){if(shared.officers.length<=1){showToast('Need at least one officer.');return;}if(!confirm('Remove this officer?'))return;shared.officers.splice(i,1);saveShared().then(()=>renderAdmin());}
-function openPinChange(i){changePinIdx=i;document.getElementById('new-pin').value='';document.getElementById('pin-change-modal').classList.add('open');}
-function saveOfficerPin(){const v=document.getElementById('new-pin').value.trim();if(!/^\d{4}$/.test(v)){showToast('PIN must be exactly 4 digits');return;}shared.officers[changePinIdx].pin=v;saveShared().then(()=>{document.getElementById('pin-change-modal').classList.remove('open');showToast('PIN updated');renderAdmin();});}
+function openPinModal(opts){pinModalMode=opts||{mode:'self'};
+  const t=document.getElementById('pin-modal-title'),n=document.getElementById('pin-modal-note'),cf=document.getElementById('cur-pin-field'),cb=document.getElementById('pin-modal-cancel');
+  document.getElementById('new-pin').value='';document.getElementById('cur-pin').value='';
+  if(pinModalMode.mode==='forced'){t.innerHTML='<i class="ti ti-lock"></i> Set your own PIN';n.textContent='First login: choose a personal 4-digit PIN before continuing.';n.style.display='block';cf.style.display='none';cb.style.display='none';}
+  else if(pinModalMode.mode==='admin'){t.innerHTML='<i class="ti ti-lock"></i> Reset PIN — '+esc(pinModalMode.name);n.textContent='Sets a temporary PIN. They will be asked to change it at next login.';n.style.display='block';cf.style.display='none';cb.style.display='inline-flex';}
+  else{t.innerHTML='<i class="ti ti-lock"></i> Change your PIN';n.style.display='none';cf.style.display='block';cb.style.display='inline-flex';}
+  document.getElementById('pin-change-modal').classList.add('open');}
+async function pinModalSave(){
+  const nv=document.getElementById('new-pin').value.trim();
+  if(!/^\d{4}$/.test(nv)){showToast('PIN must be exactly 4 digits');return;}
+  const mode=pinModalMode||{mode:'self'};
+  try{
+    let r;
+    if(mode.mode==='admin'){
+      r=await fetch(AUTH_API+'setpin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({name:mode.name,pin:nv,role:mode.role,mustChange:true})});
+    }else{
+      const oldPin=mode.mode==='forced'?lastEnteredPin:document.getElementById('cur-pin').value.trim();
+      if(!/^\d{4}$/.test(oldPin)){showToast('Enter your current PIN');return;}
+      r=await fetch(AUTH_API+'changepin',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:currentOfficer.name,oldPin,newPin:nv})});
+    }
+    const j=await r.json();
+    if(!r.ok){showToast(j.error||'Save failed');return;}
+    if(mode.mode!=='admin')lastEnteredPin=nv;
+    document.getElementById('pin-change-modal').classList.remove('open');
+    showToast('PIN saved');
+    loadAuthUsers().then(()=>{if(typeof renderAdmin==='function'&&isOfficer())renderAdmin();});
+  }catch(e){showToast('Network error');}
+}
 
 // FIELD TAGS
 function renderAcTags(){const el=document.getElementById('ac-tags');if(!el)return;el.innerHTML=(shared.acEligible||[]).map((s,i)=>'<div class="shift-tag">'+esc(s)+'<button onclick="removeAcName('+i+')">&times;</button></div>').join('');}
@@ -1220,15 +1308,16 @@ function cancelReorder(){document.getElementById('reorder-modal').classList.remo
 function confirmReorder(){const r=document.getElementById('reorder-reason').value,n=document.getElementById('reorder-notes').value.trim();if(!r){showToast('Please select a reason.');return;}const o=L().employees.map(e=>e.name).join(' → ');LL().push({name:'— List reorder —',action:'reorder',shift:'',shiftDate:'',supervisor:officerName(),reason:r,notes:`New order: ${o}${n?' | '+n:''}`,ts:Date.now()});scheduleSave();scheduleLogSave();renderList();renderLog();document.getElementById('reorder-modal').classList.remove('open');showToast('Reorder saved and logged');}
 
 // PASSWORD/SETTINGS
-function changePassword(){const v=document.getElementById('new-pw').value.trim();if(!v||v.length<4){showToast('Please enter at least 4 characters.');return;}shared.adminPassword=v;saveShared();document.getElementById('new-pw').value='';showToast('Password updated');}
+async function changePassword(){const v=document.getElementById('new-pw').value.trim();if(!v||v.length<4){showToast('Please enter at least 4 characters.');return;}if(!isAdmin()){showToast('Admin login required');return;}
+  try{const r=await fetch(AUTH_API+'setadmin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({password:v})});const j=await r.json();if(!r.ok){showToast(j.error||'Update failed');return;}document.getElementById('new-pw').value='';showToast('Password updated');}catch(e){showToast('Network error');}}
 function saveAdmin(){L().employees.forEach(e=>{const n=document.getElementById('en-'+e.id),p=document.getElementById('ep-'+e.id);if(n)e.name=n.value.trim()||e.name;if(p)e.phone=p.value.trim();});if(isAdmin()){(shared.officers||[]).forEach((o,i)=>{const n=document.getElementById('on-'+i);if(n&&n.value.trim())o.name=n.value.trim();});}Promise.all([saveActiveList(),saveShared()]).then(()=>{renderList();showToast('Changes saved');});}
 
 // OFFER MODAL
-function openModal(id,action){if(!isLoggedIn())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;amSelIds=[];amBtnsExpanded=false;
+function openModal(id,action){if(!isOfficer())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;amSelIds=[];amBtnsExpanded=false;
   if(of&&of.empId===id){const ids=(of.openShiftIds&&of.openShiftIds.length)?of.openShiftIds:(of.openShiftId?[of.openShiftId]:[]);amSelIds=ids.filter(x=>(shared.openShifts||[]).some(s=>s.id===x&&!s.filled&&!s.archived));document.getElementById('modal-date').value=(of.isMulti||amSelIds.length>1)?'':of.shiftDate||'';}
   renderAmShiftBtns();document.getElementById('action-modal').classList.add('open');}
 function closeModal(){document.getElementById('action-modal').classList.remove('open');pendingAction=null;}
-function confirmAction(){if(!pendingAction||!isLoggedIn())return;const idx=L().employees.findIndex(e=>e.id===pendingAction.id);if(idx<0){closeModal();return;}const emp=L().employees[idx];LL().push({name:emp.name,action:pendingAction.action,shift:'',shiftDate:(amSelShifts().length>1?amSelShifts().map(x=>x.date).join(', '):(amSelShifts().length===1?amSelShifts()[0].date:document.getElementById('modal-date').value)),supervisor:officerName(),reason:pendingAction.action==='pass'?document.getElementById('modal-reason').value:'',notes:document.getElementById('modal-notes').value.trim(),ts:Date.now()});if(pendingAction.action==='accept'){emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();L().employees.splice(idx,1);L().employees.push(emp);}else{emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.recentAcceptExpiry=0;emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();}let offIds=[];if(L().currentOffering&&L().currentOffering.empId===pendingAction.id){const o=L().currentOffering;offIds=(o.openShiftIds&&o.openShiftIds.length)?o.openShiftIds.slice():(o.openShiftId?[o.openShiftId]:[]);L().currentOffering=null;}
+function confirmAction(){if(!pendingAction||!isOfficer())return;const idx=L().employees.findIndex(e=>e.id===pendingAction.id);if(idx<0){closeModal();return;}const emp=L().employees[idx];LL().push({name:emp.name,action:pendingAction.action,shift:'',shiftDate:(amSelShifts().length>1?amSelShifts().map(x=>x.date).join(', '):(amSelShifts().length===1?amSelShifts()[0].date:document.getElementById('modal-date').value)),supervisor:officerName(),reason:pendingAction.action==='pass'?document.getElementById('modal-reason').value:'',notes:document.getElementById('modal-notes').value.trim(),ts:Date.now()});if(pendingAction.action==='accept'){emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();L().employees.splice(idx,1);L().employees.push(emp);}else{emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.recentAcceptExpiry=0;emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();}let offIds=[];if(L().currentOffering&&L().currentOffering.empId===pendingAction.id){const o=L().currentOffering;offIds=(o.openShiftIds&&o.openShiftIds.length)?o.openShiftIds.slice():(o.openShiftId?[o.openShiftId]:[]);L().currentOffering=null;}
   // Auto-fill open shift(s) on accept — explicit picker/offering selection first, date match as fallback
   if(pendingAction.action==='accept'){
     const explicit=[...new Set([...amSelIds,...offIds])].map(id=>(shared.openShifts||[]).find(s=>s.id===id)).filter(s=>s&&!s.filled&&!s.archived);
@@ -1380,7 +1469,7 @@ function renderOpenShifts(){if(shiftsView==='cal'){const g=document.getElementBy
 
   const active=(shared.openShifts||[]).filter(s=>!s.archived).sort((a,b)=>a.date.localeCompare(b.date));
   if(!active.length){con.innerHTML='<div style="padding:1rem;color:var(--text3);font-size:13px;text-align:center">No open shifts posted</div>';return;}
-  const li=isLoggedIn();
+  const li=isOfficer();
   con.innerHTML=active.map(s=>{
     const filled=s.filled,pri=s.priority;
     const off=[typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>(o.openShiftId===s.id||(o.openShiftIds||[]).includes(s.id))&&o.expiresAt>Date.now());
