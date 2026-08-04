@@ -156,6 +156,9 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 .cal-u.filled{background:var(--surface2);border-color:var(--border);color:var(--text3);text-decoration:line-through;cursor:default}
 .cal-u.offering{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
 .cal-core{font-size:9px;color:var(--text3);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.offer-shift-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);padding:10px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.offer-shift-btn.sel{border-color:var(--green);background:var(--green-light);color:var(--green);font-weight:600}
+.offer-shift-btn .osb-day{font-weight:600;min-width:92px}
 .view-seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 .view-seg button{border:none;background:transparent;color:var(--text3);font-size:12px;padding:7px 14px;cursor:pointer;font-family:inherit}
 .view-seg button.active{background:var(--green);color:#fff}
@@ -482,11 +485,11 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="about-wrap">
           <div class="about-logo">NCEMS</div><div class="about-line"></div><div class="about-sub">Overtime</div>
           <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0"/>
-          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv">3.1</span></div>
+          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv">3.2</span></div>
           <div class="about-row"><span class="about-rl">Year</span><span class="about-rv">2026</span></div>
           <div class="about-row"><span class="about-rl">Organization</span><span class="about-rv">North Country EMS</span></div>
           <div class="about-row"><span class="about-rl">Platform</span><span class="about-rv">Web / PWA</span></div>
-          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 3.1 · 2026 · North Country EMS</div>
+          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 3.2 · 2026 · North Country EMS</div>
         </div>
       </div>
       <div style="margin-top:1rem"><button class="btn btn-primary" onclick="saveAdmin()"><i class="ti ti-check"></i> Save all changes</button></div>
@@ -496,7 +499,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 <!-- MODALS -->
 <div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field"><label>Shift date</label><input type="date" id="modal-date"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
 <div class="modal-bg" id="pause-modal"><div class="modal"><h3><i class="ti ti-player-pause" style="margin-right:6px"></i>Reason for pausing</h3><div class="field"><label>Reason</label><select id="pause-reason-select"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="pause-notes"/></div><div class="modal-btns"><button class="btn" onclick="closePauseModal()">Cancel</button><button class="btn btn-warn" onclick="confirmPause()"><i class="ti ti-player-pause"></i> Pause</button></div></div></div>
-<div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:13px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:15px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="toggle-row"><label class="toggle-sw"><input type="checkbox" id="multi-toggle" onchange="toggleMultiShift();updateCoreWarning()"/><span class="tslider"></span></label><span class="toggle-lbl">Multiple shifts</span></div><div id="single-fields"><div class="field"><label>Shift date</label><input type="date" id="offering-date" onchange="updateCoreWarning()"/></div><div class="field"><label>Open shift (optional)</label><select id="offering-open-shift" onchange="selectOpenShift()"><option value="">— select open shift or enter date above —</option></select></div></div><div id="multi-fields" style="display:none"><div class="field"><label>Shift details</label><input type="text" id="offering-multi" placeholder="e.g. 3 shifts this weekend, Fri/Sat/Sun"/></div></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:13px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Skip — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
+<div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:13px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:15px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div id="single-fields"><div class="field"><label>Open shifts — soonest first</label><div id="offer-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div></div><div style="margin:12px 0 0"><button type="button" class="btn btn-muted btn-sm" onclick="toggleOfferManual()" style="width:100%;justify-content:center"><i class="ti ti-pencil"></i> Manual entry / multiple shifts</button></div><div id="offer-manual" style="display:none;margin-top:10px"><div class="toggle-row"><label class="toggle-sw"><input type="checkbox" id="multi-toggle" onchange="toggleMultiShift();updateCoreWarning()"/><span class="tslider"></span></label><span class="toggle-lbl">Multiple shifts</span></div><div class="field" id="manual-date-field"><label>Shift date</label><input type="date" id="offering-date" onchange="offerManualDate()"/></div><div id="multi-fields" style="display:none"><div class="field"><label>Shift details</label><input type="text" id="offering-multi" placeholder="e.g. 3 shifts this weekend, Fri/Sat/Sun"/></div></div></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:13px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Skip — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
 <div class="modal-bg" id="confirm-modal"><div class="modal"><h3>Archive and clear log?</h3><p>Download the CSV first. Then slide to confirm — <strong>this cannot be undone.</strong></p><div class="modal-btns" style="justify-content:flex-start;margin-bottom:0"><button class="btn btn-dl" onclick="downloadCSV()"><i class="ti ti-download"></i> Download CSV first</button></div><div class="slider-track" id="slider-track"><div class="slider-fill" id="slider-fill"></div><div class="slider-label" id="slider-label">← Slide to delete log</div><div class="slider-thumb" id="slider-thumb"><i class="ti ti-arrow-right" style="color:var(--red)"></i></div></div><div class="modal-btns"><button class="btn" onclick="closeConfirm()">Cancel</button></div></div></div>
 <div class="modal-bg" id="reorder-modal"><div class="modal"><h3><i class="ti ti-arrows-sort" style="margin-right:6px"></i>Reason for reorder</h3><p>This will be logged for transparency.</p><div class="field"><label>Reason</label><select id="reorder-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="reorder-notes"/></div><div class="field"><label>Authorized by</label><div id="reorder-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="modal-btns"><button class="btn" onclick="cancelReorder()">Cancel</button><button class="btn btn-primary" onclick="confirmReorder()"><i class="ti ti-check"></i> Save reorder</button></div></div></div>
 <div class="modal-bg" id="row-sheet"><div class="modal" style="padding:1rem"><div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem"></div><div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:4px;text-align:center" id="sheet-name"></div><div style="font-size:13px;color:var(--text3);text-align:center;margin-bottom:14px" id="sheet-phone"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-warn" style="justify-content:center;padding:12px" id="sheet-offer" onclick="sheetOffer()"><i class="ti ti-phone-calling"></i> Offer</button><button class="btn btn-accept" style="justify-content:center;padding:12px" id="sheet-accept" onclick="sheetAccept()"><i class="ti ti-check"></i> Accept</button><button class="btn btn-pass" style="justify-content:center;padding:12px" id="sheet-pass" onclick="sheetPass()"><i class="ti ti-x"></i> Pass</button><button class="btn btn-muted" style="justify-content:center;padding:12px" id="sheet-pause" onclick="sheetPause()"><i class="ti ti-player-pause"></i> <span id="sheet-pause-lbl">Pause</span></button></div><button class="btn btn-muted" style="justify-content:center;padding:10px;margin-top:8px;width:100%" onclick="closeRowSheet()">Cancel</button></div></div>
@@ -879,7 +882,7 @@ function buildPinKeypad(){const kp=document.getElementById('pin-keypad');if(!kp)
 // OFFICER PIN CHANGE
 
 // HELPERS
-function toggleMultiShift(){const m=document.getElementById('multi-toggle').checked;document.getElementById('single-fields').style.display=m?'none':'block';document.getElementById('multi-fields').style.display=m?'block':'none';}
+function toggleMultiShift(){const m=document.getElementById('multi-toggle').checked;document.getElementById('single-fields').style.display=m?'none':'block';document.getElementById('manual-date-field').style.display=m?'none':'block';document.getElementById('multi-fields').style.display=m?'block':'none';}
 
 // OFFERING TIMER
 function startOfferTimer(){
@@ -897,30 +900,30 @@ function startOfferTimer(){
     }
   },1000);
 }
-function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';document.getElementById('multi-toggle').checked=false;toggleMultiShift();populateOpenShiftDropdown();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
+function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';document.getElementById('multi-toggle').checked=false;offerSelShiftId='';offerBtnsExpanded=false;document.getElementById('offer-manual').style.display='none';toggleMultiShift();renderOfferShiftBtns();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
 function closeOfferingModal(){document.getElementById('offering-modal').classList.remove('open');pendingOfferingId=null;}
-function selectOpenShift(){
-  const sel=document.getElementById('offering-open-shift');
-  const val=sel.value;
-  if(!val)return;
-  const shift=shared.openShifts.find(s=>s.id===val);
-  if(!shift)return;
-  document.getElementById('offering-date').value=shift.date;
-  sel.dataset.selectedId=val;
-  updateCoreWarning();
+let offerSelShiftId='',offerBtnsExpanded=false;
+function offerOpenList(){const today=new Date().toISOString().slice(0,10);return (shared.openShifts||[]).filter(s=>!s.filled&&!s.archived&&s.date>=today).sort((a,b)=>a.date.localeCompare(b.date));}
+function renderOfferShiftBtns(){
+  const el=document.getElementById('offer-shift-btns');if(!el)return;
+  const all=offerOpenList(),show=offerBtnsExpanded?all:all.slice(0,4);
+  if(!all.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 2px">No open shifts posted — use manual entry below.</div>';return;}
+  el.innerHTML=show.map(s=>{
+    const sel=s.id===offerSelShiftId;
+    return '<button type="button" class="offer-shift-btn'+(sel?' sel':'')+'" onclick="selectOfferShift(\''+s.id+'\')"><span class="osb-day">'+esc(dayOfWeek(s.date))+' '+esc(fmtDate(s.date))+'</span><span>'+esc(s.unit)+' · '+esc(shiftTypeLabel(s.type))+'</span>'+(s.cougar?'<span class="badge badge-login" style="font-size:9px">Cougar</span>':'')+(s.priority?'<span class="badge badge-pass" style="font-size:9px">Priority</span>':'')+(sel?'<i class="ti ti-check" style="margin-left:auto"></i>':'')+'</button>';
+  }).join('');
+  if(all.length>4)el.innerHTML+='<button type="button" class="btn btn-muted btn-sm" style="width:100%;justify-content:center" onclick="offerBtnsExpanded=!offerBtnsExpanded;renderOfferShiftBtns()">'+(offerBtnsExpanded?'Show fewer':'Show all '+all.length)+'</button>';
 }
-function populateOpenShiftDropdown(){
-  const sel=document.getElementById('offering-open-shift');if(!sel)return;
-  const today=new Date().toISOString().slice(0,10);
-  const openOnly=(shared.openShifts||[]).filter(s=>!s.filled&&!s.archived&&s.date>=today);
-  sel.innerHTML='<option value="">— select open shift or enter date manually —</option>';
-  openOnly.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>{
-    const label=dayOfWeek(s.date)+' '+fmtDate(s.date)+' · '+s.unit+' · '+shiftTypeLabel(s.type)+(s.priority?' ⚠':'');
-    sel.innerHTML+='<option value="'+s.id+'">'+label+'</option>';
-  });
-  if(!openOnly.length)sel.innerHTML+='<option disabled value="">No open shifts available</option>';
+function populateOpenShiftDropdown(){renderOfferShiftBtns();}
+function selectOfferShift(id){
+  const shift=(shared.openShifts||[]).find(s=>s.id===id);if(!shift)return;
+  if(offerSelShiftId===id){offerSelShiftId='';document.getElementById('offering-date').value='';}
+  else{offerSelShiftId=id;document.getElementById('offering-date').value=shift.date;}
+  renderOfferShiftBtns();updateCoreWarning();
 }
-function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now(),isMulti=document.getElementById('multi-toggle').checked,shiftDate=isMulti?document.getElementById('offering-multi').value:document.getElementById('offering-date').value;const openShiftId=(!isMulti&&document.getElementById('offering-open-shift'))?document.getElementById('offering-open-shift').dataset.selectedId||'':'';
+function offerManualDate(){offerSelShiftId='';renderOfferShiftBtns();updateCoreWarning();}
+function toggleOfferManual(){const el=document.getElementById('offer-manual');el.style.display=el.style.display==='none'?'block':'none';}
+function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now(),isMulti=document.getElementById('multi-toggle').checked,shiftDate=isMulti?document.getElementById('offering-multi').value:document.getElementById('offering-date').value;const openShiftId=isMulti?'':(offerSelShiftId||'');
   L().currentOffering={empId:emp.id,empName:emp.name,empPhone:emp.phone||'',supervisor:officerName(),shift:'',shiftDate,isMulti,openShiftId,startedAt:now,expiresAt:now+offerTo()};scheduleSave();closeOfferingModal();renderList();}
 function cancelOffering(){L().currentOffering=null;scheduleSave();renderList();}
 
