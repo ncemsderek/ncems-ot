@@ -198,7 +198,10 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 .field label{font-size:12px;color:var(--text2);display:block;margin-bottom:5px;}
 .field input,.field select,.field textarea{width:100%;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:8px 10px;background:var(--input-bg);color:var(--text);font-family:inherit;}
 .field input:focus,.field select:focus{outline:2px solid var(--green);border-color:transparent;}
-.modal-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.modal-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;flex-wrap:wrap;position:sticky;bottom:-1px;background:var(--surface);padding:10px 0 2px;z-index:2;}
+.offer-shift-btn.flag{border-color:var(--amber-border);background:var(--amber-light);color:var(--amber);cursor:default}
+.osb-skip{margin-left:auto;font-size:10px;font-weight:600;border:1px solid var(--amber);border-radius:4px;padding:2px 7px;cursor:pointer;flex-shrink:0}
+#app-version-footer{text-align:center;font-size:10px;color:var(--text3);padding:14px 0 calc(var(--bottom-nav-h) + var(--safe-bottom) + 10px);letter-spacing:.03em}
 .pw-error{font-size:12px;color:var(--red);margin-top:6px;display:none;}
 .locked-msg{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:14px;}
 .locked-msg i{font-size:36px;display:block;margin-bottom:12px;color:var(--border);}
@@ -472,7 +475,7 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="ch open" onclick="toggleCollapse(this)"><h3><i class="ti ti-lock"></i> Admin password</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb open">
           <div style="display:flex;gap:8px;align-items:center"><input type="password" id="new-pw" placeholder="New password (min 4 chars)" style="flex:1;font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:7px 10px;background:var(--input-bg);color:var(--text)"/><button class="btn" onclick="changePassword()"><i class="ti ti-check"></i> Set</button></div>
-          <p style="font-size:12px;color:var(--text3);margin-top:8px">If forgotten: log in to jsonbin.io, open NCEMS OT Data bin, find <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">"adminPassword"</code> and change the value.</p>
+          <p style="font-size:12px;color:var(--text3);margin-top:8px">If forgotten: open the ncems-ot-data KV namespace in the Cloudflare dashboard, edit the "long" key, and change "adminPassword". <code style="background:var(--surface2);padding:1px 4px;border-radius:3px">"adminPassword"</code> and change the value.</p>
         </div>
         <div class="ch" onclick="toggleCollapse(this)" style="margin-top:.5rem"><h3><i class="ti ti-moon"></i> Display</h3><i class="ti ti-chevron-down chev"></i></div>
         <div class="cb">
@@ -485,19 +488,20 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
         <div class="about-wrap">
           <div class="about-logo">NCEMS</div><div class="about-line"></div><div class="about-sub">Overtime</div>
           <hr style="border:none;border-top:1px solid var(--border);margin:1.5rem 0"/>
-          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv">3.2</span></div>
+          <div class="about-row"><span class="about-rl">Version</span><span class="about-rv" id="about-version-rv"></span></div>
           <div class="about-row"><span class="about-rl">Year</span><span class="about-rv">2026</span></div>
           <div class="about-row"><span class="about-rl">Organization</span><span class="about-rv">North Country EMS</span></div>
           <div class="about-row"><span class="about-rl">Platform</span><span class="about-rv">Web / PWA</span></div>
-          <div class="about-credit">Created by <strong>D. Langdon</strong><br>Version 3.2 · 2026 · North Country EMS</div>
+          <div class="about-credit">Created by <strong>D. Langdon</strong><br><span id="about-version-credit"></span></div>
         </div>
       </div>
       <div style="margin-top:1rem"><button class="btn btn-primary" onclick="saveAdmin()"><i class="ti ti-check"></i> Save all changes</button></div>
     </div>
   </div>
 </div>
+<div id="app-version-footer"></div>
 <!-- MODALS -->
-<div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field"><label>Shift date</label><input type="date" id="modal-date"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
+<div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field" id="am-shifts-wrap"><label>Open shifts — tap to select</label><div id="am-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div><div class="field"><label>Shift date (manual)</label><input type="date" id="modal-date" onchange="amManualDate()"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
 <div class="modal-bg" id="pause-modal"><div class="modal"><h3><i class="ti ti-player-pause" style="margin-right:6px"></i>Reason for pausing</h3><div class="field"><label>Reason</label><select id="pause-reason-select"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="pause-notes"/></div><div class="modal-btns"><button class="btn" onclick="closePauseModal()">Cancel</button><button class="btn btn-warn" onclick="confirmPause()"><i class="ti ti-player-pause"></i> Pause</button></div></div></div>
 <div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:13px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:15px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:14px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div id="single-fields"><div class="field"><label>Open shifts — soonest first</label><div id="offer-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div></div><div style="margin:12px 0 0"><button type="button" class="btn btn-muted btn-sm" onclick="toggleOfferManual()" style="width:100%;justify-content:center"><i class="ti ti-pencil"></i> Manual entry / multiple shifts</button></div><div id="offer-manual" style="display:none;margin-top:10px"><div class="toggle-row"><label class="toggle-sw"><input type="checkbox" id="multi-toggle" onchange="toggleMultiShift();updateCoreWarning()"/><span class="tslider"></span></label><span class="toggle-lbl">Multiple shifts</span></div><div class="field" id="manual-date-field"><label>Shift date</label><input type="date" id="offering-date" onchange="offerManualDate()"/></div><div id="multi-fields" style="display:none"><div class="field"><label>Shift details</label><input type="text" id="offering-multi" placeholder="e.g. 3 shifts this weekend, Fri/Sat/Sun"/></div></div></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:13px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Skip — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
 <div class="modal-bg" id="confirm-modal"><div class="modal"><h3>Archive and clear log?</h3><p>Download the CSV first. Then slide to confirm — <strong>this cannot be undone.</strong></p><div class="modal-btns" style="justify-content:flex-start;margin-bottom:0"><button class="btn btn-dl" onclick="downloadCSV()"><i class="ti ti-download"></i> Download CSV first</button></div><div class="slider-track" id="slider-track"><div class="slider-fill" id="slider-fill"></div><div class="slider-label" id="slider-label">← Slide to delete log</div><div class="slider-thumb" id="slider-thumb"><i class="ti ti-arrow-right" style="color:var(--red)"></i></div></div><div class="modal-btns"><button class="btn" onclick="closeConfirm()">Cancel</button></div></div></div>
@@ -546,12 +550,15 @@ body.dark .badge-long{background:#2a4a2a;}body.dark .badge-short{background:#1a3
 </div>
 <div class="modal-bg" id="pin-change-modal"><div class="modal"><h3><i class="ti ti-lock" style="margin-right:6px"></i>Change your PIN</h3><div class="field"><label>New 4-digit PIN</label><input type="password" id="new-pin" placeholder="Enter new PIN" maxlength="4" inputmode="numeric"/></div><div class="modal-btns"><button class="btn" onclick="document.getElementById('pin-change-modal').classList.remove('open')">Cancel</button><button class="btn btn-primary" onclick="saveOfficerPin()"><i class="ti ti-check"></i> Save PIN</button></div></div></div>
 <script>
-const LONG_BIN='6a04fa2eadc21f119a97b740',SHORT_BIN='6a053622adc21f119a9933d4';
-const LONG_LOG='6a07f80cc0954111d82ee795',SHORT_LOG='6a07f827c0954111d82ee80d';
-const API_KEY='$2a$10$jaX9oSkLxn5szpTedzZsMOwLpNziKOYfzPm2E9A7fKBkJA0muiuJa';
+const LONG_BIN='long',SHORT_BIN='short'; // Cloudflare KV keys (storage migrated off JSONBin, v4.0)
+const LONG_LOG='longlog',SHORT_LOG='shortlog';
+const STORAGE_API='https://ncems-ot.d-langdon.workers.dev/bin/';
 const LONG_TO=3600000,SHORT_TO=600000,SESSION_MS=3600000;
 const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have an OT opportunity for the {shift} shift on {date}. Please respond within {limit}.';
 const ADMIN_USER='admin';
+const APP_VERSION='4.0';
+function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
+document.addEventListener('DOMContentLoaded',applyVersionLabels);
 const SEG_PATHS=['M3 2 L23 2 L20 6 L6 6 Z','M22 4 L25 7 L24 21 L20 18 L21 7 Z','M22 25 L25 28 L24 44 L20 41 L21 28 Z','M3 46 L23 46 L20 42 L6 42 Z','M1 25 L5 28 L4 41 L1 44 L0 28 Z','M1 4 L5 7 L4 18 L1 21 L0 7 Z','M4 22 L8 19 L18 19 L22 22 L18 25 L8 25 Z'];
 const SEG_NUMS={0:[1,1,1,1,1,1,0],1:[0,1,1,0,0,0,0],2:[1,1,0,1,1,0,1],3:[1,1,1,1,0,0,1],4:[0,1,1,0,0,1,1],5:[1,0,1,1,0,1,1],6:[1,0,1,1,1,1,1],7:[1,1,1,0,0,0,0],8:[1,1,1,1,1,1,1],9:[1,1,1,1,0,1,1],'_':[0,0,0,0,0,0,0],'A':[1,1,1,0,1,1,1],'C':[1,0,0,1,1,1,0],'E':[1,0,0,1,1,1,1],'S':[1,0,1,1,0,1,1],'*':[0,0,0,0,0,0,1],'L':[0,0,0,1,1,1,0],'Y':[0,1,1,1,0,1,1],'r':[0,0,0,0,1,0,1],'n':[0,0,1,0,1,0,1],'o':[0,0,1,1,1,0,1],'c':[0,0,0,1,1,0,1],'H':[0,1,1,0,1,1,1],'U':[0,1,1,1,1,1,0],'G':[1,0,1,1,1,1,0]};
 
@@ -574,7 +581,7 @@ const isAdmin=()=>currentOfficer&&currentOfficer.isAdmin;
 const isLoggedIn=()=>Date.now()<sessionExpiry&&currentOfficer!==null;
 const officerName=()=>currentOfficer?currentOfficer.name:'';
 const isMobile=()=>window.innerWidth<=640;
-const binUrl=id=>`https://api.jsonbin.io/v3/b/${id}`;
+const binUrl=id=>STORAGE_API+id;
 const initials=n=>(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
 const firstName=n=>(n||'').split(' ')[0]||n;
 const fmtDate=iso=>{if(!iso)return'—';const[y,m,d]=iso.split('-');return`${parseInt(m)}/${parseInt(d)}/${y.slice(2)}`;}
@@ -594,7 +601,7 @@ function calDs(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'
 function setShiftsView(v){shiftsView=v;localStorage.setItem('ncems_shifts_view',v);const sl=document.getElementById('sv-list'),sc=document.getElementById('sv-cal');if(sl)sl.className=v==='list'?'active':'';if(sc)sc.className=v==='cal'?'active':'';document.getElementById('shifts-calendar').style.display=v==='cal'?'block':'none';document.getElementById('open-shifts-list').style.display=v==='cal'?'none':'block';if(v==='cal')renderCalendar();}
 function calNav(dir){if(dir===0){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);}else{calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+dir,1);}renderCalendar();}
 function calShiftFor(ds,unit){return (shared.openShifts||[]).find(x=>x.date===ds&&x.unit===unit&&!x.archived);}
-function calOfferingFor(id){return [typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>o.openShiftId===id&&o.expiresAt>Date.now());}
+function calOfferingFor(id){return [typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>(o.openShiftId===id||(o.openShiftIds||[]).includes(id))&&o.expiresAt>Date.now());}
 function renderCalendar(){
   const grid=document.getElementById('cal-grid');if(!grid)return;
   if(!calMonth){const t=new Date();calMonth=new Date(t.getFullYear(),t.getMonth(),1);}
@@ -753,8 +760,8 @@ let stTimer=null;
 function showStatus(msg,type,dur=0){const b=document.getElementById('status-bar');b.textContent='';b.className=`status-bar ${type}`;const i=document.createElement('i');i.className=type==='loading'?'ti ti-loader':type==='saving'?'ti ti-cloud-upload':type==='error'?'ti ti-alert-circle':'ti ti-check';b.appendChild(i);b.appendChild(document.createTextNode(' '+msg));b.style.display='flex';clearTimeout(stTimer);if(dur>0)stTimer=setTimeout(()=>b.style.display='none',dur);}
 
 // JSONBIN
-async function fetchBin(id){const r=await fetch(binUrl(id)+'/latest',{headers:{'X-Master-Key':API_KEY}});if(!r.ok)throw new Error(r.status);return(await r.json()).record;}
-async function putBin(id,data,ka){const r=await fetch(binUrl(id),{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},body:JSON.stringify(data),keepalive:!!ka});if(!r.ok)throw new Error(r.status);}
+async function fetchBin(id){const r=await fetch(binUrl(id));if(!r.ok)throw new Error(r.status);return(await r.json())||{};}
+async function putBin(id,data,ka){const r=await fetch(binUrl(id),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),keepalive:!!ka});if(!r.ok)throw new Error(r.status);}
 async function saveActiveList(ka){showStatus('Saving...','saving');try{const s={...L()};delete s.log;await putBin(activeBin(),s,ka);lastUpdated=new Date();updateLastUpdated();showStatus('Saved','success',1500);}catch(e){showStatus('Save failed — tap Refresh','error',4000);}}
 async function saveActiveLog(ka){try{const lg=LL();if(lg.length>300)lg.splice(0,lg.length-300);await putBin(activeLogBin(),{log:lg},ka);}catch(e){showStatus('Log save failed','error',3000);}}
 async function saveShared(){longData.supervisors=shared.supervisors;longData.shifts=shared.shifts;longData.passReasons=shared.passReasons;longData.reorderReasons=shared.reorderReasons;longData.pauseReasons=shared.pauseReasons;longData.adminPassword=shared.adminPassword;longData.defaultDark=shared.defaultDark;longData.smsTemplate=shared.smsTemplate;longData.takeShiftSms=shared.takeShiftSms;longData.officers=shared.officers;longData.units=shared.units;longData.rotationSlots=shared.rotationSlots;longData.openShifts=shared.openShifts;['adminPassword','supervisors','shifts','passReasons','reorderReasons','pauseReasons','defaultDark','smsTemplate','takeShiftSms','officers','units','rotationSlots','openShifts'].forEach(k=>delete shortData[k]);const ls={...longData};delete ls.log;const ss={...shortData};delete ss.log;await Promise.all([putBin(LONG_BIN,ls),putBin(SHORT_BIN,ss)]);}
@@ -772,7 +779,7 @@ function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.curr
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(isLoggedIn()&&localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(isLoggedIn()&&localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
 function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
@@ -900,31 +907,61 @@ function startOfferTimer(){
     }
   },1000);
 }
-function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';document.getElementById('multi-toggle').checked=false;offerSelShiftId='';offerBtnsExpanded=false;document.getElementById('offer-manual').style.display='none';toggleMultiShift();renderOfferShiftBtns();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
+function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';document.getElementById('multi-toggle').checked=false;offerSelIds=[];offerBtnsExpanded=false;document.getElementById('offer-manual').style.display='none';toggleMultiShift();renderOfferShiftBtns();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
 function closeOfferingModal(){document.getElementById('offering-modal').classList.remove('open');pendingOfferingId=null;}
-let offerSelShiftId='',offerBtnsExpanded=false;
+let offerSelIds=[],offerBtnsExpanded=false,amSelIds=[],amBtnsExpanded=false;
 function offerOpenList(){const today=new Date().toISOString().slice(0,10);return (shared.openShifts||[]).filter(s=>!s.filled&&!s.archived&&s.date>=today).sort((a,b)=>a.date.localeCompare(b.date));}
-function renderOfferShiftBtns(){
-  const el=document.getElementById('offer-shift-btns');if(!el)return;
-  const all=offerOpenList(),show=offerBtnsExpanded?all:all.slice(0,4);
-  if(!all.length){el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 2px">No open shifts posted — use manual entry below.</div>';return;}
-  el.innerHTML=show.map(s=>{
-    const sel=s.id===offerSelShiftId;
-    return '<button type="button" class="offer-shift-btn'+(sel?' sel':'')+'" onclick="selectOfferShift(\''+s.id+'\')"><span class="osb-day">'+esc(dayOfWeek(s.date))+' '+esc(fmtDate(s.date))+'</span><span>'+esc(s.unit)+' · '+esc(shiftTypeLabel(s.type))+'</span>'+(s.cougar?'<span class="badge badge-login" style="font-size:9px">Cougar</span>':'')+(s.priority?'<span class="badge badge-pass" style="font-size:9px">Priority</span>':'')+(sel?'<i class="ti ti-check" style="margin-left:auto"></i>':'')+'</button>';
+function shiftPickerHtml(elId,selIds,expanded,empName,toggleFn,expandFn,allowSkip){
+  const all=offerOpenList(),show=expanded?all:all.slice(0,4);
+  if(!all.length)return '<div style="font-size:12px;color:var(--text3);padding:6px 2px">No open shifts posted — use manual entry below.</div>';
+  let h=show.map(s=>{
+    const m=empName?coreMatch(s.date,empName):null;
+    const sel=selIds.includes(s.id);
+    const inner='<span class="osb-day">'+esc(dayOfWeek(s.date))+' '+esc(fmtDate(s.date))+'</span><span>'+esc(s.unit)+' · '+esc(shiftTypeLabel(s.type))+'</span>'+(s.cougar?'<span class="badge badge-login" style="font-size:9px">Cougar</span>':'')+(s.priority?'<span class="badge badge-pass" style="font-size:9px">Priority</span>':'');
+    if(m)return '<div class="offer-shift-btn flag" title="'+esc(m.note)+' — baseline rotation, verify against Aladtec">'+inner+'<span style="margin-left:auto;font-size:10px;font-weight:600">On core shift</span>'+(allowSkip?'<span class="osb-skip" onclick="logSkipFor(\''+s.id+'\')">Skip &amp; log</span>':'')+'</div>';
+    return '<button type="button" class="offer-shift-btn'+(sel?' sel':'')+'" onclick="'+toggleFn+'(\''+s.id+'\')">'+inner+(sel?'<i class="ti ti-check" style="margin-left:auto"></i>':'')+'</button>';
   }).join('');
-  if(all.length>4)el.innerHTML+='<button type="button" class="btn btn-muted btn-sm" style="width:100%;justify-content:center" onclick="offerBtnsExpanded=!offerBtnsExpanded;renderOfferShiftBtns()">'+(offerBtnsExpanded?'Show fewer':'Show all '+all.length)+'</button>';
+  if(all.length>4)h+='<button type="button" class="btn btn-muted btn-sm" style="width:100%;justify-content:center" onclick="'+expandFn+'">'+(expanded?'Show fewer':'Show all '+all.length)+'</button>';
+  return h;
 }
+function offerEmpName(){const e=L().employees.find(x=>x.id===pendingOfferingId);return e?e.name:'';}
+function amEmpName(){if(!pendingAction)return '';const e=L().employees.find(x=>x.id===pendingAction.id);return e?e.name:'';}
+function renderOfferShiftBtns(){const el=document.getElementById('offer-shift-btns');if(el)el.innerHTML=shiftPickerHtml('offer-shift-btns',offerSelIds,offerBtnsExpanded,offerEmpName(),'selectOfferShift','offerBtnsExpanded=!offerBtnsExpanded;renderOfferShiftBtns()',true);}
+function renderAmShiftBtns(){const el=document.getElementById('am-shift-btns');if(el)el.innerHTML=shiftPickerHtml('am-shift-btns',amSelIds,amBtnsExpanded,amEmpName(),'selectAmShift','amBtnsExpanded=!amBtnsExpanded;renderAmShiftBtns()',false);}
 function populateOpenShiftDropdown(){renderOfferShiftBtns();}
 function selectOfferShift(id){
-  const shift=(shared.openShifts||[]).find(s=>s.id===id);if(!shift)return;
-  if(offerSelShiftId===id){offerSelShiftId='';document.getElementById('offering-date').value='';}
-  else{offerSelShiftId=id;document.getElementById('offering-date').value=shift.date;}
+  const i=offerSelIds.indexOf(id);
+  if(i>=0)offerSelIds.splice(i,1);else offerSelIds.push(id);
+  if(offerSelIds.length)document.getElementById('offering-date').value='';
   renderOfferShiftBtns();updateCoreWarning();
 }
-function offerManualDate(){offerSelShiftId='';renderOfferShiftBtns();updateCoreWarning();}
+function selectAmShift(id){
+  const i=amSelIds.indexOf(id);
+  if(i>=0)amSelIds.splice(i,1);else amSelIds.push(id);
+  const sel=amSelShifts();
+  document.getElementById('modal-date').value=sel.length===1?sel[0].date:'';
+  renderAmShiftBtns();
+}
+function amSelShifts(){return amSelIds.map(id=>(shared.openShifts||[]).find(s=>s.id===id)).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date));}
+function offerSelShifts(){return offerSelIds.map(id=>(shared.openShifts||[]).find(s=>s.id===id)).filter(Boolean).sort((a,b)=>a.date.localeCompare(b.date));}
+function amManualDate(){amSelIds=[];renderAmShiftBtns();}
+function offerManualDate(){offerSelIds=[];renderOfferShiftBtns();updateCoreWarning();}
 function toggleOfferManual(){const el=document.getElementById('offer-manual');el.style.display=el.style.display==='none'?'block':'none';}
-function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now(),isMulti=document.getElementById('multi-toggle').checked,shiftDate=isMulti?document.getElementById('offering-multi').value:document.getElementById('offering-date').value;const openShiftId=isMulti?'':(offerSelShiftId||'');
-  L().currentOffering={empId:emp.id,empName:emp.name,empPhone:emp.phone||'',supervisor:officerName(),shift:'',shiftDate,isMulti,openShiftId,startedAt:now,expiresAt:now+offerTo()};scheduleSave();closeOfferingModal();renderList();}
+function logSkipFor(id){
+  const s=(shared.openShifts||[]).find(x=>x.id===id);if(!s)return;
+  const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp)return;
+  const m=coreMatch(s.date,emp.name);
+  LL().push({name:emp.name,action:'skip',shift:'',shiftDate:s.date,supervisor:officerName(),reason:'Already on core shift',notes:s.unit+' — '+(m?m.note:'core rotation day')+' (baseline rotation)',ts:Date.now()});
+  scheduleLogSave();renderLog();showToast(emp.name+' skipped for '+fmtDate(s.date)+' — not counted as a pass');
+}
+function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now(),manualMulti=document.getElementById('multi-toggle').checked;
+  const sel=offerSelShifts();
+  let shiftDate,isMulti=false,openShiftId='',openShiftIds=[];
+  if(manualMulti){shiftDate=document.getElementById('offering-multi').value;isMulti=true;}
+  else if(sel.length>1){isMulti=true;openShiftIds=sel.map(x=>x.id);shiftDate=sel.map(x=>dayOfWeek(x.date)+' '+fmtDate(x.date)+' '+x.unit).join(' + ');}
+  else if(sel.length===1){openShiftId=sel[0].id;openShiftIds=[sel[0].id];shiftDate=sel[0].date;}
+  else{shiftDate=document.getElementById('offering-date').value;}
+  L().currentOffering={empId:emp.id,empName:emp.name,empPhone:emp.phone||'',supervisor:officerName(),shift:'',shiftDate,isMulti,openShiftId,openShiftIds,startedAt:now,expiresAt:now+offerTo()};scheduleSave();closeOfferingModal();renderList();}
 function cancelOffering(){L().currentOffering=null;scheduleSave();renderList();}
 
 // SMS
@@ -1122,21 +1159,25 @@ function changePassword(){const v=document.getElementById('new-pw').value.trim()
 function saveAdmin(){L().employees.forEach(e=>{const n=document.getElementById('en-'+e.id),p=document.getElementById('ep-'+e.id);if(n)e.name=n.value.trim()||e.name;if(p)e.phone=p.value.trim();});if(isAdmin()){(shared.officers||[]).forEach((o,i)=>{const n=document.getElementById('on-'+i);if(n&&n.value.trim())o.name=n.value.trim();});}Promise.all([saveActiveList(),saveShared()]).then(()=>{renderList();showToast('Changes saved');});}
 
 // OFFER MODAL
-function openModal(id,action){if(!isLoggedIn())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;if(of&&of.empId===id){document.getElementById('modal-date').value=of.isMulti?'':of.shiftDate||'';}document.getElementById('action-modal').classList.add('open');}
+function openModal(id,action){if(!isLoggedIn())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;amSelIds=[];amBtnsExpanded=false;
+  if(of&&of.empId===id){const ids=(of.openShiftIds&&of.openShiftIds.length)?of.openShiftIds:(of.openShiftId?[of.openShiftId]:[]);amSelIds=ids.filter(x=>(shared.openShifts||[]).some(s=>s.id===x&&!s.filled&&!s.archived));document.getElementById('modal-date').value=(of.isMulti||amSelIds.length>1)?'':of.shiftDate||'';}
+  renderAmShiftBtns();document.getElementById('action-modal').classList.add('open');}
 function closeModal(){document.getElementById('action-modal').classList.remove('open');pendingAction=null;}
-function confirmAction(){if(!pendingAction||!isLoggedIn())return;const idx=L().employees.findIndex(e=>e.id===pendingAction.id);if(idx<0){closeModal();return;}const emp=L().employees[idx];LL().push({name:emp.name,action:pendingAction.action,shift:'',shiftDate:document.getElementById('modal-date').value,supervisor:officerName(),reason:pendingAction.action==='pass'?document.getElementById('modal-reason').value:'',notes:document.getElementById('modal-notes').value.trim(),ts:Date.now()});if(pendingAction.action==='accept'){emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();L().employees.splice(idx,1);L().employees.push(emp);}else{emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.recentAcceptExpiry=0;emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();}if(L().currentOffering&&L().currentOffering.empId===pendingAction.id)L().currentOffering=null;
-  // Auto-fill open shift on accept
+function confirmAction(){if(!pendingAction||!isLoggedIn())return;const idx=L().employees.findIndex(e=>e.id===pendingAction.id);if(idx<0){closeModal();return;}const emp=L().employees[idx];LL().push({name:emp.name,action:pendingAction.action,shift:'',shiftDate:(amSelShifts().length>1?amSelShifts().map(x=>x.date).join(', '):(amSelShifts().length===1?amSelShifts()[0].date:document.getElementById('modal-date').value)),supervisor:officerName(),reason:pendingAction.action==='pass'?document.getElementById('modal-reason').value:'',notes:document.getElementById('modal-notes').value.trim(),ts:Date.now()});if(pendingAction.action==='accept'){emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();L().employees.splice(idx,1);L().employees.push(emp);}else{emp.passCount=(emp.passCount||0)+1;emp.recentPassExpiry=midnight();emp.recentAcceptExpiry=0;emp.todayPassCount=(emp.todayPassCount||0)+1;emp.todayPassDate=new Date().toDateString();}let offIds=[];if(L().currentOffering&&L().currentOffering.empId===pendingAction.id){const o=L().currentOffering;offIds=(o.openShiftIds&&o.openShiftIds.length)?o.openShiftIds.slice():(o.openShiftId?[o.openShiftId]:[]);L().currentOffering=null;}
+  // Auto-fill open shift(s) on accept — explicit picker/offering selection first, date match as fallback
   if(pendingAction.action==='accept'){
-    const acceptedDate=document.getElementById('modal-date').value;
-    if(acceptedDate&&shared.openShifts&&shared.openShifts.length){
-      const matches=shared.openShifts.filter(s=>!s.filled&&!s.archived&&s.date===acceptedDate);
-      if(matches.length===1){
-        matches[0].filled=true;matches[0].filledBy=emp.name;matches[0].filledAt=Date.now();
-        saveShared();renderOpenShifts();showToast(emp.name+' — open shift marked filled');
-      } else if(matches.length>1){
-        const s=matches[0];
-        s.filled=true;s.filledBy=emp.name;s.filledAt=Date.now();
-        saveShared();renderOpenShifts();showToast('Open shift marked filled');
+    const explicit=[...new Set([...amSelIds,...offIds])].map(id=>(shared.openShifts||[]).find(s=>s.id===id)).filter(s=>s&&!s.filled&&!s.archived);
+    if(explicit.length){
+      explicit.forEach(s=>{s.filled=true;s.filledBy=emp.name;s.filledAt=Date.now();});
+      saveShared();renderOpenShifts();showToast(explicit.length===1?emp.name+' — open shift marked filled':emp.name+' — '+explicit.length+' open shifts marked filled');
+    }else{
+      const acceptedDate=document.getElementById('modal-date').value;
+      if(acceptedDate&&shared.openShifts&&shared.openShifts.length){
+        const matches=shared.openShifts.filter(s=>!s.filled&&!s.archived&&s.date===acceptedDate);
+        if(matches.length){
+          matches[0].filled=true;matches[0].filledBy=emp.name;matches[0].filledAt=Date.now();
+          saveShared();renderOpenShifts();showToast(emp.name+' — open shift marked filled');
+        }
       }
     }
   }
@@ -1277,7 +1318,7 @@ function renderOpenShifts(){if(shiftsView==='cal'){const g=document.getElementBy
   const li=isLoggedIn();
   con.innerHTML=active.map(s=>{
     const filled=s.filled,pri=s.priority;
-    const off=[typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>o.openShiftId===s.id&&o.expiresAt>Date.now());
+    const off=[typeof longData==='object'?longData.currentOffering:null,typeof shortData==='object'?shortData.currentOffering:null].filter(Boolean).find(o=>(o.openShiftId===s.id||(o.openShiftIds||[]).includes(s.id))&&o.expiresAt>Date.now());
     const rowBg=filled?'opacity:.45;':pri?'background:var(--red-light);border-left:3px solid var(--red);':'';
     const dow=dayOfWeek(s.date);
     return'<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border2);'+rowBg+'">'
