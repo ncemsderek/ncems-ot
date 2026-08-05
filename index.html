@@ -26,6 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;padding-top:env(safe-area-inset-top,0px);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .logo-wrap{display:flex;align-items:center;gap:11px;min-width:0;}
 .logo-mark{width:38px;height:38px;flex-shrink:0;display:block;}
+body.dark .logo-mark{background:#fff;border-radius:50%;}
 .logo-title{font-family:Helvetica,Arial,sans-serif;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.3px;line-height:1;white-space:nowrap;}
 .logo-title em{font-style:normal;color:var(--green);}
 .logo-rule{width:1px;height:26px;background:var(--border);flex-shrink:0;}
@@ -295,18 +296,49 @@ body.dark .cal-cellhead{background:transparent}
 .pin-screen{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%;max-width:320px;}
 .pin-name{font-size:18px;font-weight:600;color:var(--green);font-family:Helvetica,Arial,sans-serif;}
 .display-panel{background:#0a0a0a;border-radius:10px;padding:11px 18px 10px;border:1.5px solid #1a2a1a;box-shadow:inset 0 2px 8px rgba(0,0,0,.8);display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;}
-.display-lbl{font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:.2em;color:#2a4a2a;text-transform:uppercase;}
+.display-lbl{font-family:Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:.2em;color:#55a055;text-transform:uppercase;}
 .segments-row{display:flex;gap:7px;align-items:center;}
 .digit-wrap{width:28px;height:48px;flex-shrink:0;}
 .seg{transition:fill .08s,filter .08s;}
 .seg.on{fill:#39ff14;filter:drop-shadow(0 0 3px #39ff14) drop-shadow(0 0 7px #20cc00);}
-.seg.off{fill:#0d1a0d;}
+.seg.off{fill:#1a2c1a;}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;}
 .pin-key{border-radius:10px;height:clamp(52px,9.2vh,74px);font-size:clamp(30px,5.6vh,46px);font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;border:none;width:100%;font-family:Helvetica,Arial,sans-serif;transition:transform .08s;-webkit-tap-highlight-color:transparent;}
 .confirm-btn{background:var(--green);color:#fff;border:none;border-radius:10px;width:100%;height:52px;font-size:16px;font-weight:600;letter-spacing:.05em;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;flex-shrink:0;}
 .pin-error{font-size:14px;color:var(--red);height:18px;text-align:center;}
 .back-btn{background:none;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:5px 8px;font-family:inherit;display:flex;align-items:center;gap:6px;align-self:flex-start;}
 .back-btn:hover{color:var(--text2);}
+/* PRINT SHEET */
+#print-sheet{display:none;}
+#print-modal .ps-scroll{max-height:58vh;overflow:auto;border:1px solid var(--border);border-radius:8px;}
+.ps-title{font-size:17px;font-weight:800;color:var(--text);}
+.ps-sub{font-size:12.5px;color:var(--text3);margin-top:2px;}
+table.ps-table{width:100%;border-collapse:collapse;font-size:13px;}
+table.ps-table th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);padding:7px 9px;background:var(--surface2);position:sticky;top:0;}
+table.ps-table td{padding:7px 9px;border-bottom:1px solid var(--border2);color:var(--text);}
+table.ps-table tr.ps-filled td{color:var(--text3);}
+table.ps-table td.ps-num{color:var(--text3);width:26px;}
+.ps-badge{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:1px 6px;border-radius:4px;}
+.ps-open{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-border);}
+.ps-fill{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+@media print{
+  body{background:#fff!important;}
+  body>*{display:none!important;}
+  #print-sheet{display:block!important;position:static;color:#000;font-family:Helvetica,Arial,sans-serif;}
+  #print-sheet .ps-head{display:flex;align-items:center;gap:12px;border-bottom:2px solid #1d5a2c;padding-bottom:8px;margin-bottom:14px;}
+  #print-sheet .ps-head img{width:44px;height:44px;}
+  #print-sheet .ps-h1{font-size:19px;font-weight:800;color:#111;}
+  #print-sheet .ps-h2{font-size:13px;color:#555;margin-top:2px;}
+  #print-sheet table{width:100%;border-collapse:collapse;font-size:12px;}
+  #print-sheet th{text-align:left;border-bottom:1.5px solid #333;padding:6px 8px;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#333;}
+  #print-sheet td{padding:6px 8px;border-bottom:1px solid #ccc;color:#000;}
+  #print-sheet tr.ps-filled td{color:#666;}
+  #print-sheet .ps-badge{border:1px solid #999;border-radius:3px;padding:0 5px;font-size:10px;font-weight:700;}
+  #print-sheet .ps-open{border-color:#b8860b;color:#8a6508;}
+  #print-sheet .ps-fill{border-color:#2d6a2d;color:#2d6a2d;}
+  #print-sheet .ps-foot{margin-top:16px;font-size:10.5px;color:#666;border-top:1px solid #ccc;padding-top:7px;}
+  @page{margin:14mm;}
+}
 /* ABOUT */
 .about-wrap{text-align:center;padding:2rem 1rem;}
 .about-logo{font-family:Helvetica,Arial,sans-serif;font-size:32px;font-weight:700;color:var(--green);}
@@ -344,8 +376,8 @@ body.dark .cal-cellhead{background:transparent}
 </header>
 <nav class="bottom-nav">
   <button class="bnav-item active" id="nav-list" onclick="showTab('list',event)"><i class="ti ti-ambulance"></i><span>OT List</span></button>
-  <button class="bnav-item" id="nav-log" onclick="showTab('log',event)"><i class="ti ti-clipboard-list"></i><span>Log</span></button>
-  <button class="bnav-item" id="nav-shifts" onclick="showTab('shifts',event)"><i class="ti ti-calendar"></i><span>Shifts</span></button><button class="bnav-item bnav-stats" id="nav-stats" onclick="showTab('stats',event)" style="display:none"><i class="ti ti-chart-bar"></i><span>Stats</span></button><button class="bnav-item bnav-admin" id="nav-admin" onclick="showTab('admin',event)"><i class="ti ti-settings"></i><span>Admin</span></button>
+  <button class="bnav-item" id="nav-shifts" onclick="showTab('shifts',event)"><i class="ti ti-calendar"></i><span>Shifts</span></button>
+  <button class="bnav-item" id="nav-log" onclick="showTab('log',event)"><i class="ti ti-clipboard-list"></i><span>Log</span></button><button class="bnav-item bnav-stats" id="nav-stats" onclick="showTab('stats',event)" style="display:none"><i class="ti ti-chart-bar"></i><span>Stats</span></button><button class="bnav-item bnav-admin" id="nav-admin" onclick="showTab('admin',event)"><i class="ti ti-settings"></i><span>Admin</span></button>
   <button class="bnav-item" id="nav-login-m" onclick="openAuthFlow()" style="display:none"><i class="ti ti-lock"></i><span>Login</span></button>
 </nav>
 <!-- OFFICER SELECT -->
@@ -395,9 +427,9 @@ body.dark .cal-cellhead{background:transparent}
   <div class="tab-bar">
     <div class="tab-left">
       <button class="tab active" id="tab-btn-list" onclick="showTab('list',event)">OT List</button>
-      <button class="tab" id="tab-btn-log" onclick="showTab('log',event)">Log</button>
+      <button class="tab" id="shifts-tab" onclick="showTab('shifts',event)"><i class="ti ti-calendar" style="font-size:14px"></i> Open Shifts</button>
     </div>
-    <div class="tab-right"><button class="tab" id="shifts-tab" onclick="showTab('shifts',event)"><i class="ti ti-calendar" style="font-size:14px"></i> Open Shifts</button><button class="tab" id="stats-tab" onclick="showTab('stats',event)" style="display:none"><i class="ti ti-chart-bar" style="font-size:14px"></i> Stats</button></div><div class="tab-right"><button class="tab" id="admin-tab" onclick="showTab('admin',event)" style="display:none"><i class="ti ti-settings" style="font-size:14px"></i> Admin</button></div>
+    <div class="tab-right"><button class="tab" id="tab-btn-log" onclick="showTab('log',event)">Log</button><button class="tab" id="stats-tab" onclick="showTab('stats',event)" style="display:none"><i class="ti ti-chart-bar" style="font-size:14px"></i> Stats</button></div><div class="tab-right"><button class="tab" id="admin-tab" onclick="showTab('admin',event)" style="display:none"><i class="ti ti-settings" style="font-size:14px"></i> Admin</button></div>
   </div>
   <!-- OT LIST -->
   <div id="tab-list" class="section active">
@@ -449,6 +481,7 @@ body.dark .cal-cellhead{background:transparent}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem">
       <span class="view-seg"><button id="sv-list" class="active" onclick="setShiftsView('list')"><i class="ti ti-list"></i> List</button><button id="sv-cal" onclick="setShiftsView('cal')"><i class="ti ti-calendar"></i> Calendar</button></span>
       <span id="shifts-officer-actions" style="display:none"><button class="btn btn-primary" onclick="openAddShiftModal()"><i class="ti ti-plus"></i> Add shift</button></span>
+      <button class="btn btn-muted btn-sm" onclick="openPrintSheet()" title="Printable open-shift sheet"><i class="ti ti-printer"></i> Print</button>
     </div>
     <div id="readonly-shifts-notice" class="notice"><i class="ti ti-eye"></i> View only — log in to add or edit shifts</div>
     <div id="shifts-calendar" style="display:none"><div class="card" style="padding:12px">
@@ -570,9 +603,9 @@ body.dark .cal-cellhead{background:transparent}
 </div>
 <div id="app-version-footer"></div>
 <!-- MODALS -->
-<div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field" id="am-shifts-wrap"><label>Open shifts — tap to select</label><div id="am-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div><div class="field"><label>Shift date (manual)</label><input type="date" id="modal-date" onchange="amManualDate()"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
+<div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field" id="am-shifts-wrap"><label>Open shifts — tap to select</label><div id="am-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div><div class="field"><label>Shift date (manual)</label><input type="date" id="modal-date" onclick="try{this.showPicker()}catch(e){}" onchange="amManualDate()"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
 <div class="modal-bg" id="pause-modal"><div class="modal"><h3><i class="ti ti-player-pause" style="margin-right:6px"></i>Reason for pausing</h3><div class="field"><label>Reason</label><select id="pause-reason-select"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="pause-notes"/></div><div class="modal-btns"><button class="btn" onclick="closePauseModal()">Cancel</button><button class="btn btn-warn" onclick="confirmPause()"><i class="ti ti-player-pause"></i> Pause</button></div></div></div>
-<div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:14px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:16px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div id="single-fields"><div class="field"><label>Open shifts — soonest first</label><div id="offer-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div></div><div style="margin:12px 0 0"><button type="button" class="btn btn-muted btn-sm" onclick="toggleOfferManual()" style="width:100%;justify-content:center"><i class="ti ti-pencil"></i> Manual entry / multiple shifts</button></div><div id="offer-manual" style="display:none;margin-top:10px"><div class="toggle-row"><label class="toggle-sw"><input type="checkbox" id="multi-toggle" onchange="toggleMultiShift();updateCoreWarning()"/><span class="tslider"></span></label><span class="toggle-lbl">Multiple shifts</span></div><div class="field" id="manual-date-field"><label>Shift date</label><input type="date" id="offering-date" onchange="offerManualDate()"/></div><div id="multi-fields" style="display:none"><div class="field"><label>Shift details</label><input type="text" id="offering-multi" placeholder="e.g. 3 shifts this weekend, Fri/Sat/Sun"/></div></div></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:14px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Skip — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
+<div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:14px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:16px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div id="single-fields"><div class="field"><label>Open shifts — soonest first</label><div id="offer-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div></div><div style="margin:12px 0 0"><button type="button" class="btn btn-muted btn-sm" onclick="toggleOfferManual()" style="width:100%;justify-content:center"><i class="ti ti-pencil"></i> Manual entry</button></div><div id="offer-manual" style="display:none;margin-top:10px"><div class="field"><label>Unit</label><select id="offering-unit"></select></div><div class="field" id="manual-date-field"><label>Shift date</label><input type="date" id="offering-date" onclick="try{this.showPicker()}catch(e){}" onchange="offerManualDate()"/></div><p style="font-size:12px;color:var(--text3);margin:0 0 8px">A manual shift is posted to Open Shifts automatically when you offer it.</p></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:14px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Skip — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
 <div class="modal-bg" id="confirm-modal"><div class="modal"><h3>Archive and clear log?</h3><p>Download the CSV first. Then slide to confirm — <strong>this cannot be undone.</strong></p><div class="modal-btns" style="justify-content:flex-start;margin-bottom:0"><button class="btn btn-dl" onclick="downloadCSV()"><i class="ti ti-download"></i> Download CSV first</button></div><div class="slider-track" id="slider-track"><div class="slider-fill" id="slider-fill"></div><div class="slider-label" id="slider-label">← Slide to delete log</div><div class="slider-thumb" id="slider-thumb"><i class="ti ti-arrow-right" style="color:var(--red)"></i></div></div><div class="modal-btns"><button class="btn" onclick="closeConfirm()">Cancel</button></div></div></div>
 <div class="modal-bg" id="reorder-modal"><div class="modal"><h3><i class="ti ti-arrows-sort" style="margin-right:6px"></i>Reason for reorder</h3><p>This will be logged for transparency.</p><div class="field"><label>Reason</label><select id="reorder-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="reorder-notes"/></div><div class="field"><label>Authorized by</label><div id="reorder-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="modal-btns"><button class="btn" onclick="cancelReorder()">Cancel</button><button class="btn btn-primary" onclick="confirmReorder()"><i class="ti ti-check"></i> Save reorder</button></div></div></div>
 <div class="modal-bg" id="row-sheet"><div class="modal" style="padding:1rem"><div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem"></div><div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px;text-align:center" id="sheet-name"></div><div style="font-size:14px;color:var(--text3);text-align:center;margin-bottom:14px" id="sheet-phone"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-warn" style="justify-content:center;padding:12px" id="sheet-offer" onclick="sheetOffer()"><i class="ti ti-phone-calling"></i> Offer</button><button class="btn btn-accept" style="justify-content:center;padding:12px" id="sheet-accept" onclick="sheetAccept()"><i class="ti ti-check"></i> Accept</button><button class="btn btn-pass" style="justify-content:center;padding:12px" id="sheet-pass" onclick="sheetPass()"><i class="ti ti-x"></i> Pass</button><button class="btn btn-muted" style="justify-content:center;padding:12px" id="sheet-pause" onclick="sheetPause()"><i class="ti ti-player-pause"></i> <span id="sheet-pause-lbl">Pause</span></button></div><button class="btn btn-muted" style="justify-content:center;padding:10px;margin-top:8px;width:100%" onclick="closeRowSheet()">Cancel</button></div></div>
@@ -591,7 +624,7 @@ body.dark .cal-cellhead{background:transparent}
 <div class="modal-bg" id="add-shift-modal">
   <div class="modal">
     <h3><i class="ti ti-calendar-plus" style="margin-right:6px"></i>Add open shift</h3>
-    <div class="field"><label>Date</label><input type="date" id="shift-date-input"/></div>
+    <div class="field"><label>Date</label><input type="date" id="shift-date-input" onclick="try{this.showPicker()}catch(e){}"/></div>
     <div class="field"><label>Unit</label><select id="shift-unit-input"></select></div>
     <div class="field"><label>Shift type</label>
       <select id="shift-type-input">
@@ -617,6 +650,16 @@ body.dark .cal-cellhead{background:transparent}
     <div class="modal-btns"><button class="btn" onclick="closeFillShiftModal()">Cancel</button><button class="btn btn-accept" onclick="confirmFillShift()"><i class="ti ti-check"></i> Mark as filled</button></div>
   </div>
 </div>
+<div class="modal-bg" id="print-modal"><div class="modal" style="max-width:640px"><h3><i class="ti ti-printer" style="margin-right:6px"></i>Open shift sheet</h3>
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+  <button class="btn btn-muted btn-sm" onclick="printMonthNav(-1)"><i class="ti ti-chevron-left"></i></button>
+  <span id="ps-month" style="font-weight:700;font-size:15px;min-width:150px;text-align:center"></span>
+  <button class="btn btn-muted btn-sm" onclick="printMonthNav(1)"><i class="ti ti-chevron-right"></i></button>
+  <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);margin-left:auto"><input type="checkbox" id="ps-hidefilled" onchange="buildPrintSheet()"/> Open shifts only</label>
+</div>
+<div class="ps-scroll" id="ps-preview"></div>
+<div class="modal-btns"><button class="btn" onclick="document.getElementById('print-modal').classList.remove('open')">Close</button><button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> Print</button></div>
+</div></div>
 <div class="modal-bg" id="pin-change-modal"><div class="modal"><h3 id="pin-modal-title"><i class="ti ti-lock" style="margin-right:6px"></i>Change your PIN</h3><p id="pin-modal-note" style="font-size:13px;color:var(--text3);margin-bottom:10px;display:none"></p><div class="field" id="cur-pin-field"><label>Current PIN</label><input type="password" id="cur-pin" placeholder="Current 4-digit PIN" maxlength="4" inputmode="numeric"/></div><div class="field"><label>New 4-digit PIN</label><input type="password" id="new-pin" placeholder="Enter new PIN" maxlength="4" inputmode="numeric"/></div><div class="modal-btns"><button class="btn" id="pin-modal-cancel" onclick="document.getElementById('pin-change-modal').classList.remove('open')">Cancel</button><button class="btn btn-primary" onclick="pinModalSave()"><i class="ti ti-check"></i> Save PIN</button></div></div></div>
 <script>
 const LONG_BIN='long',SHORT_BIN='short'; // Cloudflare KV keys (storage migrated off JSONBin, v4.0)
@@ -630,7 +673,7 @@ const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have 
 const DEFAULT_SMS_3RD='Hi {name}, this is {officer} from North Country EMS. We are putting up a 3rd call rig on {date}. Want the shift? Please respond within {limit}.';
 const DEFAULT_SMS_AC='Hi {name}, this is {officer}. We need an Acting Captain on {date}. First to claim it gets it — let me know.';
 const ADMIN_USER='admin';
-const APP_VERSION='5.2';
+const APP_VERSION='5.4';
 function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
 document.addEventListener('DOMContentLoaded',applyVersionLabels);
 function showUpdateBar(v){if(document.getElementById('update-bar'))return;const b=document.createElement('div');b.id='update-bar';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--green);color:#fff;font-size:14px;padding:9px 14px;text-align:center;cursor:pointer';b.innerHTML='<i class="ti ti-refresh"></i> Version '+esc(v)+' is available — tap to update';b.onclick=async()=>{try{await fetch(location.pathname,{cache:'reload'});}catch(e){}location.reload();};document.body.appendChild(b);}
@@ -700,7 +743,7 @@ function renderCalendar(){
     const cls='cal-cell'+(ds<today?' cal-past':'')+(ds===today?' cal-today':'');
     let btns='';
     const editMode=edit;
-    [['M51','M51'],['M52','M52'],['M54','M54'],['3rd Call','3rd']].forEach(u=>{
+    [['M51','M51'],['M52','M52'],['M54','M54'],['3rd Call','3rd Call']].forEach(u=>{
       const sh=calShiftFor(ds,u[0]);
       if(!editMode&&!sh)return; // crew view: only show days with actual shifts
       let c='cal-u',t=u[1];
@@ -722,7 +765,7 @@ function renderCalendar(){
     if(!editMode&&!btns)btns='';
     const acSh=calShiftFor(ds,'AC');
     let acHtml='';
-    if(edit){const acMeta=acSh?(acSh.filled?esc((acSh.filledBy||'').split(' ')[0]):'posted'):'';acHtml='<div class="cal-ac'+(acSh?' on':'')+'" onclick="calToggle(\''+ds+'\',\'AC\')" title="Acting Captain'+(acSh&&acSh.filled?' — filled by '+esc(acSh.filledBy):'')+'"><span class="cu-tag">AC</span>'+(acMeta?'<span class="cu-meta">'+acMeta+'</span>':'')+'</div>';}
+    if(edit){const acMeta=acSh?(acSh.filled?esc((acSh.filledBy||'').split(' ')[0]):'open'):'';acHtml='<div class="cal-ac'+(acSh?' on':'')+'" onclick="calToggle(\''+ds+'\',\'AC\')" title="Acting Captain'+(acSh&&acSh.filled?' — filled by '+esc(acSh.filledBy):'')+'"><span class="cu-tag">AC</span>'+(acMeta?'<span class="cu-meta">'+acMeta+'</span>':'')+'</div>';}
     else if(acSh){const acOff2=calOfferingFor(acSh.id);let ac='cal-u on acu';if(acSh.filled)ac='cal-u filled';else if(acOff2)ac='cal-u offering';btns+='<div class="'+ac+'"'+(acSh.filled?'':' onclick="openTakeShiftModal(\''+acSh.id+'\')"')+' title="Acting Captain'+(acSh.filled?' — filled by '+esc(acSh.filledBy):'')+'"><span class="cu-tag">AC</span></div>';}
     h+='<div class="'+cls+'"><div class="cal-cellhead"><span class="cal-date"><span class="cal-dow">'+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+'</span>'+day+'</span>'+coreChip+'</div><div class="cal-units">'+btns+'</div>'+(edit?acHtml:'')+coreBody+'</div>';
   }
@@ -763,7 +806,43 @@ const ROT_YR_SAT_ANCHOR=new Date(2026,0,3);   // Sat Jan 3 2026 = Y (Josh) on Sa
 function rotSlots(){const o=(typeof shared==='object'&&shared&&shared.rotationSlots)?shared.rotationSlots:{};return Object.assign({},ROT_DEFAULT_SLOTS,o);}
 const coreGroup=s=>/^[XYR]$/.test(s)?'xyr':/^[ABC]$/.test(s)?'abc':/^F/.test(s)?'flex':'bc';
 const coreLabel=s=>/^B[123]$/.test(s)?'BC':s;
-const shortName=n=>{const p=String(n||'').trim().split(/\s+/);return p.length>1?p[0]+' '+p[p.length-1][0]+'.':(p[0]||'');};
+const shortName=n=>{const p=String(n||'').trim().split(/\s+/);return p.length>1?p[0][0]+'. '+p[p.length-1]:(p[0]||'');};
+// PRINT SHEET
+let psMonth=null;
+function bcOnDuty(ds){const e=coreOnDuty(ds).find(x=>/^B[123]$/.test(x.slot));return e?e.name:'';}
+function psRows(){
+  const y=psMonth.getFullYear(),m=psMonth.getMonth();
+  const hideFilled=!!(document.getElementById('ps-hidefilled')||{}).checked;
+  return (shared.openShifts||[]).filter(s=>{
+    const d=rotParse(s.date);
+    if(d.getFullYear()!==y||d.getMonth()!==m)return false;
+    if(hideFilled&&s.filled)return false;
+    return true;
+  }).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:String(a.unit).localeCompare(String(b.unit)));
+}
+function psDateTxt(ds){const d=rotParse(ds);return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()]+' '+(d.getMonth()+1)+'/'+d.getDate();}
+function psTable(){
+  const rows=psRows();
+  if(!rows.length)return '<div style="padding:18px;text-align:center;color:var(--text3);font-size:13px">No shifts posted for this month.</div>';
+  const body=rows.map((s,i)=>{
+    const unit=esc(s.unit)+(s.cougar?' <span style="opacity:.7">(Cougar)</span>':'')+(s.priority?' <span style="opacity:.7">(Priority)</span>':'');
+    const past=s.date<calDs(new Date());
+    const status=s.filled?'<span class="ps-badge ps-fill">'+esc(s.filledBy||'FILLED')+'</span>':(past?'<span class="ps-badge ps-open">NOT FILLED</span>':'<span class="ps-badge ps-open">OPEN</span>');
+    return '<tr class="'+(s.filled||past?'ps-filled':'')+'"><td class="ps-num">'+(i+1)+'</td><td>'+esc(psDateTxt(s.date))+'</td><td>'+unit+'</td><td>'+esc(s.type==='24hr'?'24 hr':s.type==='12am'?'12 hr AM':s.type==='12pm'?'12 hr PM':s.type||'')+'</td><td>'+esc(bcOnDuty(s.date))+'</td><td>'+status+'</td></tr>';
+  }).join('');
+  return '<table class="ps-table"><thead><tr><th></th><th>Date</th><th>Unit</th><th>Shift</th><th>BC on</th><th>Filled by</th></tr></thead><tbody>'+body+'</tbody></table>';
+}
+function buildPrintSheet(){
+  if(!psMonth)psMonth=calMonth?new Date(calMonth.getFullYear(),calMonth.getMonth(),1):new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  const title=psMonth.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const ml=document.getElementById('ps-month');if(ml)ml.textContent=title;
+  const pv=document.getElementById('ps-preview');if(pv)pv.innerHTML=psTable();
+  const hideFilled=!!(document.getElementById('ps-hidefilled')||{}).checked;
+  const sheet=document.getElementById('print-sheet');
+  if(sheet)sheet.innerHTML='<div class="ps-head"><img src="logo-ncems.png" alt=""><div><div class="ps-h1">Open Shifts &mdash; '+esc(title.toUpperCase())+'</div><div class="ps-h2">North Country EMS &middot; Crew 1'+(hideFilled?' &middot; open only':'')+'</div></div></div>'+psTable()+'<div class="ps-foot">Printed '+esc(new Date().toLocaleString())+' from overtime.northcountryems.org &middot; v'+APP_VERSION+'. Aladtec is the schedule of record.</div>';
+}
+function openPrintSheet(){psMonth=calMonth?new Date(calMonth.getFullYear(),calMonth.getMonth(),1):new Date(new Date().getFullYear(),new Date().getMonth(),1);const cb=document.getElementById('ps-hidefilled');if(cb)cb.checked=false;buildPrintSheet();document.getElementById('print-modal').classList.add('open');}
+function printMonthNav(d){psMonth=new Date(psMonth.getFullYear(),psMonth.getMonth()+d,1);buildPrintSheet();}
 function coreBarsHtml(ds){return coreOnDuty(ds).map(x=>{const g=coreGroup(x.slot);return '<div class="core-bar cb-'+g+'" title="'+esc(x.note)+'"><span class="cb-sl">'+esc(coreLabel(x.slot))+'</span>'+esc(x.name)+'</div>';}).join('');}
 function coreOnDuty(ds){
   if(!ds||!/^\d{4}-\d{2}-\d{2}$/.test(ds))return[];
@@ -804,9 +883,8 @@ function coreMatch(ds,empName){
 function updateCoreWarning(){
   const w=document.getElementById('core-warning');if(!w)return;
   const emp=L().employees.find(e=>e.id===pendingOfferingId);
-  const multi=document.getElementById('multi-toggle').checked;
   const ds=document.getElementById('offering-date').value;
-  const m=(!multi&&emp&&ds)?coreMatch(ds,emp.name):null;
+  const m=(emp&&ds)?coreMatch(ds,emp.name):null;
   if(m){document.getElementById('core-warning-text').innerHTML=`<i class="ti ti-alert-triangle" style="font-size:14px"></i> <strong>${esc(emp.name)}</strong> looks to be on their core rotation this day (${esc(m.note)}). Baseline math only — verify against Aladtec.`;w.style.display='block';}
   else w.style.display='none';
 }
@@ -887,7 +965,7 @@ function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.curr
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();if(localStorage.getItem('ncems_shifts_view')==='cal')setShiftsView('cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();setShiftsView(localStorage.getItem('ncems_shifts_view')==='list'?'list':'cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
 function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
@@ -968,7 +1046,7 @@ function keyPressClr(){return darkMode?'#39ff14':'#ffffff';}
 
 function makeSvg(idx){const ns='http://www.w3.org/2000/svg';const s=document.createElementNS(ns,'svg');s.setAttribute('width','28');s.setAttribute('height','48');s.setAttribute('viewBox','0 0 28 48');SEG_PATHS.forEach((d,i)=>{const p=document.createElementNS(ns,'path');p.setAttribute('d',d);p.classList.add('seg','off');p.id=`pd${idx}s${i}`;s.appendChild(p);});return s;}
 function buildPinDisplay(){const row=document.getElementById('seg-row');if(!row)return;row.innerHTML='';for(let i=0;i<6;i++){const w=document.createElement('div');w.className='digit-wrap';w.appendChild(makeSvg(i));row.appendChild(w);}updatePinDisplay();}
-function setDigit(idx,val,color='#39ff14',glow='#20cc00'){const pat=SEG_NUMS[val]??SEG_NUMS['_'];for(let i=0;i<7;i++){const s=document.getElementById(`pd${idx}s${i}`);if(!s)continue;if(pat[i]===1){s.style.fill=color;s.style.filter=`drop-shadow(0 0 3px ${color}) drop-shadow(0 0 7px ${glow})`;}else{s.style.fill='#0d1a0d';s.style.filter='none';}}}
+function setDigit(idx,val,color='#39ff14',glow='#20cc00'){const pat=SEG_NUMS[val]??SEG_NUMS['_'];for(let i=0;i<7;i++){const s=document.getElementById(`pd${idx}s${i}`);if(!s)continue;if(pat[i]===1){s.style.fill=color;s.style.filter=`drop-shadow(0 0 3px ${color}) drop-shadow(0 0 7px ${glow})`;}else{s.style.fill='#1a2c1a';s.style.filter='none';}}}
 function updatePinDisplay(){for(let i=0;i<6;i++){let v='_';if(i>=1&&i<=4&&(i-1)<pinEntered.length)v=pinEntered[i-1];setDigit(i,v);}}
 function showPinMessage(chars,color,glow){// chars is array of 6 chars for digits 0-5
   for(let i=0;i<6;i++)setDigit(i,chars[i]||'_',color,glow);}
@@ -1023,7 +1101,6 @@ async function confirmPin(){
 }
 
 // HELPERS
-function toggleMultiShift(){const m=document.getElementById('multi-toggle').checked;document.getElementById('single-fields').style.display=m?'none':'block';document.getElementById('manual-date-field').style.display=m?'none':'block';document.getElementById('multi-fields').style.display=m?'block':'none';}
 
 // OFFERING TIMER
 function startOfferTimer(){
@@ -1041,7 +1118,7 @@ function startOfferTimer(){
     }
   },1000);
 }
-function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';document.getElementById('multi-toggle').checked=false;offerSelIds=[];offerBtnsExpanded=false;document.getElementById('offer-manual').style.display='none';toggleMultiShift();renderOfferShiftBtns();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
+function openOfferingModal(id){pendingOfferingId=id;const emp=L().employees.find(e=>e.id===id);const pd=document.getElementById('offering-phone-display'),pn=document.getElementById('offering-phone-number');if(emp&&emp.phone){pn.textContent=emp.phone;pd.style.display='flex';}else pd.style.display='none';document.getElementById('offering-modal-desc').textContent=isShort()?'A 10-minute countdown will be shown to all officers.':'A 1-hour countdown will be shown to all officers.';document.getElementById('offering-officer-name').textContent=officerName();document.getElementById('offering-date').value='';offerSelIds=[];offerBtnsExpanded=false;document.getElementById('offer-manual').style.display='none';const us=(shared.units||['M51','M52','M53','M54']).concat(['3rd Call']);if(emp&&(shared.acEligible||[]).includes(emp.name))us.push('AC');document.getElementById('offering-unit').innerHTML=us.map(u=>'<option value="'+esc(u)+'">'+esc(u)+'</option>').join('');renderOfferShiftBtns();updateCoreWarning();document.getElementById('offering-modal').classList.add('open');}
 function closeOfferingModal(){document.getElementById('offering-modal').classList.remove('open');pendingOfferingId=null;}
 let offerSelIds=[],offerBtnsExpanded=false,amSelIds=[],amBtnsExpanded=false;
 function offerOpenList(){const today=new Date().toISOString().slice(0,10);return (shared.openShifts||[]).filter(s=>!s.filled&&!s.archived&&s.date>=today).sort((a,b)=>a.date.localeCompare(b.date));}
@@ -1090,14 +1167,26 @@ function logSkipFor(id){
   LL().push({name:emp.name,action:'skip',shift:'',shiftDate:s.date,supervisor:officerName(),reason:'Already on core shift',notes:s.unit+' — '+(m?m.note:'core rotation day')+' (baseline rotation)',ts:Date.now()});
   scheduleLogSave();renderLog();showToast(emp.name+' skipped for '+fmtDate(s.date)+' — not counted as a pass');
 }
-function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now(),manualMulti=document.getElementById('multi-toggle').checked;
+function confirmOffering(){const emp=L().employees.find(e=>e.id===pendingOfferingId);if(!emp){closeOfferingModal();return;}const now=Date.now();
   const sel=offerSelShifts();
   let shiftDate,isMulti=false,openShiftId='',openShiftIds=[];
-  if(manualMulti){shiftDate=document.getElementById('offering-multi').value;isMulti=true;}
-  else if(sel.length>1){isMulti=true;openShiftIds=sel.map(x=>x.id);shiftDate=sel.map(x=>dayOfWeek(x.date)+' '+fmtDate(x.date)+' '+x.unit).join(' + ');}
+  if(sel.length>1){isMulti=true;openShiftIds=sel.map(x=>x.id);shiftDate=sel.map(x=>dayOfWeek(x.date)+' '+fmtDate(x.date)+' '+x.unit).join(' + ');}
   else if(sel.length===1){openShiftId=sel[0].id;openShiftIds=[sel[0].id];shiftDate=sel[0].date;}
-  else{shiftDate=document.getElementById('offering-date').value;}
-  L().currentOffering={empId:emp.id,empName:emp.name,empPhone:emp.phone||'',supervisor:officerName(),shift:'',shiftDate,isMulti,openShiftId,openShiftIds,startedAt:now,expiresAt:now+offerTo()};scheduleSave();closeOfferingModal();renderList();}
+  else{
+    shiftDate=document.getElementById('offering-date').value;
+    if(shiftDate){
+      const unit=document.getElementById('offering-unit').value||'M51';
+      let sh=(shared.openShifts||[]).find(s=>s.date===shiftDate&&s.unit===unit&&!s.archived&&!s.filled);
+      if(!sh){
+        const cougar=unit==='M54'&&isCougarDate(shiftDate);
+        sh={id:'s'+now,date:shiftDate,unit,type:'24hr',notes:cougar?'Cougar Car':'',priority:false,cougar,filled:false,filledBy:'',filledAt:0,addedBy:officerName(),addedAt:now,archived:false};
+        shared.openShifts=shared.openShifts||[];shared.openShifts.push(sh);scheduleSharedSave();
+        LL().push({name:'— Open shift —',action:'shift',shift:'',shiftDate:shiftDate,supervisor:officerName(),reason:'Added',notes:unit+(cougar?' (Cougar Car)':'')+' added via offer',ts:now});scheduleLogSave();
+      }
+      openShiftId=sh.id;openShiftIds=[sh.id];
+    }
+  }
+  L().currentOffering={empId:emp.id,empName:emp.name,empPhone:emp.phone||'',supervisor:officerName(),shift:'',shiftDate,isMulti,openShiftId,openShiftIds,startedAt:now,expiresAt:now+offerTo()};scheduleSave();closeOfferingModal();renderList();renderOpenShifts();}
 function cancelOffering(){L().currentOffering=null;scheduleSave();renderList();}
 
 // SMS
@@ -1254,7 +1343,16 @@ function showSubTab(n,ev){document.querySelectorAll('[id^="sub-"]').forEach(s=>s
 
 // EMPLOYEE EDIT
 function markDirty(id){const b=document.getElementById('es-'+id);if(b)b.style.display='inline-flex';}
-function saveEmpName(id){const inp=document.getElementById('en-'+id),ph=document.getElementById('ep-'+id),btn=document.getElementById('es-'+id),av=document.getElementById('ea-'+id);if(!inp)return;const n=inp.value.trim();if(!n){showToast('Name cannot be empty.');return;}const emp=L().employees.find(e=>e.id===id);if(emp){emp.name=n;if(ph)emp.phone=ph.value.trim();if(av)av.textContent=initials(n);scheduleSave();renderList();}if(btn)btn.style.display='none';}
+function nameInUse(n){return (longData.employees||[]).some(e=>e.name===n)||(shortData.employees||[]).some(e=>e.name===n)||(shared.officers||[]).some(o=>o.name===n);}
+async function maybeRenameLogin(oldName,newName){
+  if(!oldName||!newName||oldName===newName||!authToken)return;
+  if(!authUsers||!authUsers.some(u=>u.name===oldName))return;
+  if(authUsers.some(u=>u.name===newName))return;
+  if(nameInUse(oldName))return;
+  try{const r=await fetch(AUTH_API+'renameuser',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({from:oldName,to:newName})});
+    if(r.ok){await loadAuthUsers();showToast('Login moved to '+newName);if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}}catch(e){}
+}
+function saveEmpName(id){const inp=document.getElementById('en-'+id),ph=document.getElementById('ep-'+id),btn=document.getElementById('es-'+id),av=document.getElementById('ea-'+id);if(!inp)return;const n=inp.value.trim();if(!n){showToast('Name cannot be empty.');return;}const emp=L().employees.find(e=>e.id===id);if(emp){const oldName=emp.name;emp.name=n;if(ph)emp.phone=ph.value.trim();if(av)av.textContent=initials(n);scheduleSave();renderList();maybeRenameLogin(oldName,n);}if(btn)btn.style.display='none';}
 function addEmployee(){const n=prompt('Paramedic name:');if(!n||!n.trim())return;const p=prompt('Phone number (optional):')||'';L().employees.push({id:nextId(),name:n.trim(),phone:p.trim(),available:true,acceptCount:0,passCount:0,recentPassExpiry:0,recentAcceptExpiry:0,todayPassCount:0,todayPassDate:'',pauseReason:''});scheduleSave();renderAdmin();renderList();}
 function removeEmployee(id){if(!confirm('Remove this paramedic?'))return;L().employees=L().employees.filter(e=>e.id!==id);scheduleSave();renderAdmin();renderList();}
 
@@ -1285,7 +1383,7 @@ async function removeCrewLogin(name){if(!confirm('Remove login for '+name+'? The
   try{const r=await fetch(AUTH_API+'removeuser',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({name})});const j=await r.json();if(!r.ok){showToast(j.error||'Remove failed');return;}showToast('Login removed');loadAuthUsers().then(()=>renderAdmin());}catch(e){showToast('Network error');}}
 function addOfficer(){shared.officers.push({name:'New Officer',phone:'',lastLogin:null});saveShared().then(()=>{renderAdmin();// Focus the new officer name field
 const idx=shared.officers.length-1;setTimeout(()=>{const n=document.getElementById('on-'+idx);if(n){n.select();}},100);});}
-function saveOfficerField(i){const n=document.getElementById('on-'+i),ph=document.getElementById('oph-'+i);if(!shared.officers[i])return;const newName=(n?n.value.trim():'')||shared.officers[i].name;shared.officers[i].name=newName;if(ph)shared.officers[i].phone=ph.value.trim();saveShared();}
+function saveOfficerField(i){const n=document.getElementById('on-'+i),ph=document.getElementById('oph-'+i);if(!shared.officers[i])return;const oldName=shared.officers[i].name;const newName=(n?n.value.trim():'')||oldName;shared.officers[i].name=newName;if(ph)shared.officers[i].phone=ph.value.trim();saveShared();maybeRenameLogin(oldName,newName);}
 function removeOfficer(i){if(shared.officers.length<=1){showToast('Need at least one officer.');return;}if(!confirm('Remove this officer?'))return;shared.officers.splice(i,1);saveShared().then(()=>renderAdmin());}
 function openPinModal(opts){pinModalMode=opts||{mode:'self'};
   const t=document.getElementById('pin-modal-title'),n=document.getElementById('pin-modal-note'),cf=document.getElementById('cur-pin-field'),cb=document.getElementById('pin-modal-cancel');
@@ -1352,7 +1450,7 @@ function confirmReorder(){const r=document.getElementById('reorder-reason').valu
 // PASSWORD/SETTINGS
 async function changePassword(){const v=document.getElementById('new-pw').value.trim();if(!v||v.length<4){showToast('Please enter at least 4 characters.');return;}if(!isAdmin()){showToast('Admin login required');return;}
   try{const r=await fetch(AUTH_API+'setadmin',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+authToken},body:JSON.stringify({password:v})});const j=await r.json();if(!r.ok){showToast(j.error||'Update failed');return;}document.getElementById('new-pw').value='';showToast('Password updated');}catch(e){showToast('Network error');}}
-function saveAdmin(){L().employees.forEach(e=>{const n=document.getElementById('en-'+e.id),p=document.getElementById('ep-'+e.id);if(n)e.name=n.value.trim()||e.name;if(p)e.phone=p.value.trim();});if(isAdmin()){(shared.officers||[]).forEach((o,i)=>{const n=document.getElementById('on-'+i);if(n&&n.value.trim())o.name=n.value.trim();});}Promise.all([saveActiveList(),saveShared()]).then(()=>{renderList();showToast('Changes saved');});}
+function saveAdmin(){const renames=[];L().employees.forEach(e=>{const n=document.getElementById('en-'+e.id),p=document.getElementById('ep-'+e.id);if(n){const nv=n.value.trim()||e.name;if(nv!==e.name)renames.push([e.name,nv]);e.name=nv;}if(p)e.phone=p.value.trim();});if(isAdmin()){(shared.officers||[]).forEach((o,i)=>{const n=document.getElementById('on-'+i);if(n&&n.value.trim()){if(n.value.trim()!==o.name)renames.push([o.name,n.value.trim()]);o.name=n.value.trim();}});}renames.forEach(p=>maybeRenameLogin(p[0],p[1]));Promise.all([saveActiveList(),saveShared()]).then(()=>{renderList();showToast('Changes saved');});}
 
 // OFFER MODAL
 function openModal(id,action){if(!isOfficer())return;pendingAction={id,action};document.getElementById('modal-title').textContent=action==='accept'?'Mark as accepted':'Mark as passed';const btn=document.getElementById('modal-confirm-btn');btn.textContent=action==='accept'?'Accept':'Pass';btn.className=action==='accept'?'btn btn-accept':'btn btn-pass';document.getElementById('modal-notes').value='';document.getElementById('modal-date').value='';document.getElementById('reason-field').style.display=action==='pass'?'block':'none';document.getElementById('modal-reason').innerHTML=`<option value="">— select reason —</option>`+(shared.passReasons||[]).map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('');document.getElementById('modal-officer-name').textContent=officerName();const of=L().currentOffering;amSelIds=[];amBtnsExpanded=false;
@@ -1635,5 +1733,6 @@ if(!window.Chart){const s=document.createElement('script');s.src='https://cdnjs.
 setInterval(()=>{if(sessionExpiry>0&&!isLoggedIn()){sessionExpiry=0;currentOfficer=null;applyAuth();}},30000);
 init();
 </script>
+<div id="print-sheet" aria-hidden="true"></div>
 </body>
 </html>

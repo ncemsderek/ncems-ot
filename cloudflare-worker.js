@@ -1,4 +1,4 @@
-// NCEMS OT — Cloudflare Worker storage + auth API (v2, app v5.0)
+// NCEMS OT — Cloudflare Worker storage + auth API (v2.1, app v5.4: adds /auth/renameuser)
 // KV binding: OT_KV. Secret binding: AUTH_SECRET (Settings > Variables & Secrets).
 // Public:  GET /bin/{long|short|longlog|shortlog}   GET /auth/users
 // Auth:    POST /auth/login  /auth/adminlogin  /auth/changepin  /auth/seed (one-time)
@@ -138,6 +138,17 @@ export default {
       if (!tk || tk.r !== 'admin') return J({ error: 'admin required' }, 401, cors);
       if (!body.password || String(body.password).length < 4) return J({ error: 'min 4 chars' }, 400, cors);
       auth.admin = await pinRec(body.password); await putAuth(env, auth);
+      return J({ ok: true }, 200, cors);
+    }
+    if (action === 'renameuser') {
+      const tk = await verifyToken(env, req.headers.get('Authorization'));
+      if (!tk || (tk.r !== 'admin' && tk.r !== 'officer')) return J({ error: 'officer required' }, 401, cors);
+      const from = String(body.from || ''), to = String(body.to || '').trim();
+      if (!from || !to) return J({ error: 'from and to required' }, 400, cors);
+      if (!auth.users[from]) return J({ error: 'no such user' }, 404, cors);
+      if (auth.users[to]) return J({ error: 'target name already has a login' }, 409, cors);
+      auth.users[to] = auth.users[from]; delete auth.users[from];
+      await putAuth(env, auth);
       return J({ ok: true }, 200, cors);
     }
     if (action === 'removeuser') {
