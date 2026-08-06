@@ -1,14 +1,81 @@
-// NCEMS OT — Cloudflare Worker storage + auth API (v2.1, app v5.4: adds /auth/renameuser)
-// KV binding: OT_KV. Secret binding: AUTH_SECRET (Settings > Variables & Secrets).
-// Public:  GET /bin/{long|short|longlog|shortlog}   GET /auth/users
-// Auth:    POST /auth/login  /auth/adminlogin  /auth/changepin  /auth/seed (one-time)
-//          POST /auth/setpin (admin token)      PUT /bin/* (any valid token)
-// Legacy mode: until /auth/seed runs, PUTs fall back to the old origin-only gate.
+// NCEMS OT — Cloudflare Worker storage + auth API (v3.0, app v6.0)
+// Bindings: KV = OT_KV, D1 = OT_DB, Secret = AUTH_SECRET (Settings > Variables & Secrets).
+// Public:  GET /bin/{long|short|longlog|shortlog}   GET /auth/users   GET /log/count
+// Auth:    POST /auth/login /adminlogin /changepin /seed (one-time)
+//          POST /auth/setpin /setadmin /renameuser /removeuser (admin token)
+//          POST /log/append (any token)  /log/clear (admin)  /log/migrate (admin, one-time)
+//          PUT /bin/* (any valid token)
+//
+// v3.0: the LOG moved from KV to D1. KV allowed 1,000 writes/day and forced a rolling
+// 300-entry cap that silently ate history. D1 gives 100k row writes/day and 5 GB, so the
+// overtime log is now a complete record — it is the evidence trail for CBA Art. 15.
+// /bin/longlog and /bin/shortlog keep their old shape ({log:[...]}) and are backed by D1.
+// Writes are append-only. Nothing in this Worker ever deletes a log row except /log/clear.
 
 const APP_ORIGIN = 'https://overtime.northcountryems.org';
 const KEYS = ['long', 'short', 'longlog', 'shortlog'];
+const LOG_KEYS = { longlog: 'long', shortlog: 'short' };   // /bin key -> list value in D1
 const AUTH_KEY = 'auth'; // never served by /bin
 const SESSION_MS = 3600000;
+const LOG_COLS = ['list', 'name', 'action', 'shift', 'shiftDate', 'supervisor', 'reason', 'notes', 'ts'];
+
+// --- D1 log helpers -------------------------------------------------------
+let schemaReady = false;
+async function ensureLogSchema(env) {
+  if (schemaReady) return;
+  await env.OT_DB.batch([
+    env.OT_DB.prepare(`CREATE TABLE IF NOT EXISTS ot_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      list TEXT NOT NULL, name TEXT, action TEXT, shift TEXT, shiftDate TEXT,
+      supervisor TEXT, reason TEXT, notes TEXT, ts INTEGER NOT NULL)`),
+    env.OT_DB.prepare(`CREATE INDEX IF NOT EXISTS idx_ot_log_ts ON ot_log(ts)`),
+    env.OT_DB.prepare(`CREATE INDEX IF NOT EXISTS idx_ot_log_list_ts ON ot_log(list, ts)`),
+    // makes every write idempotent, so a retry or a stale client cannot duplicate history
+    env.OT_DB.prepare(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ot_log_uniq ON ot_log(list, ts, name, action)`)
+  ]);
+  schemaReady = true;
+}
+// v6.0 vocabulary fixes, applied to everything on the way in so no stale client can
+// reintroduce the old words: 'skip' collided with CBA 15.7 "skipped overtime opportunity",
+// and a timed-out offer was being recorded as a refusal.
+function normalizeEntry(e) {
+  let action = String(e.action || '');
+  const reason = e.reason == null ? '' : String(e.reason);
+  if (action === 'skip') action = 'unavailable';
+  if (action === 'pass' && /^no response$/i.test(reason.trim())) action = 'noresponse';
+  return {
+    name: e.name == null ? '' : String(e.name),
+    action,
+    shift: e.shift == null ? '' : String(e.shift),
+    shiftDate: e.shiftDate == null ? '' : String(e.shiftDate),
+    supervisor: e.supervisor == null ? '' : String(e.supervisor),
+    reason,
+    notes: e.notes == null ? '' : String(e.notes),
+    ts: Number(e.ts) || Date.now()
+  };
+}
+async function readLog(env, list) {
+  await ensureLogSchema(env);
+  const r = await env.OT_DB.prepare(
+    `SELECT name, action, shift, shiftDate, supervisor, reason, notes, ts
+       FROM ot_log WHERE list = ? ORDER BY ts ASC, id ASC`).bind(list).all();
+  return r.results || [];
+}
+async function appendLog(env, list, entries) {
+  await ensureLogSchema(env);
+  const rows = (entries || []).filter(e => e && typeof e === 'object').map(normalizeEntry);
+  if (!rows.length) return 0;
+  const sql = `INSERT OR IGNORE INTO ot_log (list, name, action, shift, shiftDate, supervisor, reason, notes, ts)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  let written = 0;
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100);
+    const res = await env.OT_DB.batch(chunk.map(e => env.OT_DB.prepare(sql)
+      .bind(list, e.name, e.action, e.shift, e.shiftDate, e.supervisor, e.reason, e.notes, e.ts)));
+    res.forEach(x => { written += (x.meta && x.meta.changes) || 0; });
+  }
+  return written;
+}
 
 const te = new TextEncoder();
 const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
@@ -50,12 +117,68 @@ export default {
     };
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
+    // ---------- /log (D1) ----------
+    const lg = url.pathname.match(/^\/log\/([a-z]+)$/);
+    if (lg) {
+      const op = lg[1];
+      if (op === 'count' && req.method === 'GET') {
+        await ensureLogSchema(env);
+        const r = await env.OT_DB.prepare(
+          `SELECT list, COUNT(*) AS n, MIN(ts) AS oldest, MAX(ts) AS newest FROM ot_log GROUP BY list`).all();
+        return J({ ok: true, lists: r.results || [] }, 200, cors);
+      }
+      if (req.method !== 'POST') return J({ error: 'method' }, 405, cors);
+      if (req.headers.get('Origin') !== APP_ORIGIN) return J({ error: 'forbidden' }, 403, cors);
+      const tk = await verifyToken(env, req.headers.get('Authorization'));
+      if (!tk) return J({ error: 'auth required' }, 401, cors);
+      let b; try { b = await req.json(); } catch (e) { return J({ error: 'bad json' }, 400, cors); }
+
+      if (op === 'append') {
+        const list = b.list === 'short' ? 'short' : 'long';
+        if (!Array.isArray(b.entries)) return J({ error: 'entries must be an array' }, 400, cors);
+        if (b.entries.length > 500) return J({ error: 'too many entries' }, 413, cors);
+        const n = await appendLog(env, list, b.entries);
+        return J({ ok: true, inserted: n }, 200, cors);
+      }
+      if (op === 'clear') { // admin only — the ONLY path that deletes log rows
+        if (tk.r !== 'admin') return J({ error: 'admin required' }, 401, cors);
+        const list = b.list === 'short' ? 'short' : 'long';
+        await ensureLogSchema(env);
+        const r = await env.OT_DB.prepare(`DELETE FROM ot_log WHERE list = ?`).bind(list).run();
+        return J({ ok: true, deleted: (r.meta && r.meta.changes) || 0 }, 200, cors);
+      }
+      if (op === 'migrate') { // one-time KV -> D1 import, admin only
+        if (tk.r !== 'admin') return J({ error: 'admin required' }, 401, cors);
+        await ensureLogSchema(env);
+        const out = {};
+        for (const [kvKey, list] of Object.entries(LOG_KEYS)) {
+          const have = await env.OT_DB.prepare(`SELECT COUNT(*) AS n FROM ot_log WHERE list = ?`).bind(list).first();
+          if (have && have.n > 0 && !b.force) { out[list] = { skipped: 'already has ' + have.n + ' rows' }; continue; }
+          const raw = await env.OT_KV.get(kvKey);
+          let entries = [];
+          try { const p = JSON.parse(raw || 'null'); entries = (p && Array.isArray(p.log)) ? p.log : []; } catch (e) { entries = []; }
+          const before = entries.length;
+          const renamed = entries.filter(e => e && (e.action === 'skip' || (e.action === 'pass' && /^no response$/i.test(String(e.reason || '').trim())))).length;
+          const n = await appendLog(env, list, entries);
+          out[list] = { read: before, inserted: n, rewritten: renamed };
+        }
+        return J({ ok: true, ...out }, 200, cors);
+      }
+      return J({ error: 'not found' }, 404, cors);
+    }
+
     // ---------- /bin ----------
     const m = url.pathname.match(/^\/bin\/([a-z]+)$/);
     if (m) {
       const key = m[1];
       if (!KEYS.includes(key)) return J({ error: 'not found' }, 404, cors);
+      const logList = LOG_KEYS[key] || null;   // longlog/shortlog are D1-backed
+
       if (req.method === 'GET') {
+        if (logList) {
+          const log = await readLog(env, logList);
+          return new Response(JSON.stringify({ log }), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+        }
         const v = await env.OT_KV.get(key);
         return new Response(v === null ? 'null' : v, { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
       }
@@ -68,9 +191,16 @@ export default {
           return J({ error: 'forbidden' }, 403, cors); // legacy mode, pre-seed
         }
         const body = await req.text();
-        if (body.length > 200000) return J({ error: 'too large' }, 413, cors);
+        if (body.length > 400000) return J({ error: 'too large' }, 413, cors);
         let parsed; try { parsed = JSON.parse(body); } catch (e) { return J({ error: 'bad json' }, 400, cors); }
         if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) return J({ error: 'bad shape' }, 400, cors);
+        if (logList) {
+          // Compatibility path for clients older than v6.0, which PUT the whole array.
+          // MERGE, never replace: the unique index drops what is already there and a short
+          // stale array can therefore never truncate the record.
+          const n = await appendLog(env, logList, Array.isArray(parsed.log) ? parsed.log : []);
+          return J({ ok: true, merged: n }, 200, cors);
+        }
         await env.OT_KV.put(key, body);
         return J({ ok: true }, 200, cors);
       }
