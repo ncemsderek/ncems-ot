@@ -17,14 +17,18 @@
 :root{--bg:#f4f6f4;--surface:#fff;--surface2:#f5f8f5;--border:#d5e2d5;--border2:#e6eee6;--text:#1a1a1a;--text2:#4a4a4a;--text3:#7d857d;--slate-bg:#eef1ee;--green:#2d6a2d;--green-light:#e8f4e8;--green-border:#a3c9a3;--green-row:#e4f2e4;--red:#c0392b;--red-light:#fdf0ee;--amber:#d68910;--amber-light:#fffbea;--amber-border:#f0c040;--blue:#1a5a8a;--blue-light:#e6f0f8;--blue-border:#7aaed4;--blue-row:#e0eef8;--purple:#3b4eab;--purple-light:#eef3ff;--input-bg:#fff;--input-border:#ccc;--shadow:rgba(0,0,0,0.18);--header-h:64px;--bottom-nav-h:64px;--safe-bottom:env(safe-area-inset-bottom,0px);}
 body.dark{--bg:#1b201b;--surface:#262d26;--surface2:#323a32;--border:#3a453a;--border2:#333c33;--text:#eef5ee;--text2:#b8c6b8;--text3:#8a998a;--slate-bg:#2e362e;--green:#63b863;--green-light:#22331f;--green-border:#3d5e3d;--green-row:#1f2f1f;--red:#e8695f;--red-light:#331f1f;--amber:#eeae35;--amber-light:#332612;--amber-border:#7a5c18;--blue:#5a9ed0;--blue-light:#1d2d3d;--blue-border:#33587a;--blue-row:#1d2d3d;--purple:#96a4ee;--purple-light:#232648;--input-bg:#2a312a;--input-border:#465246;--shadow:rgba(0,0,0,0.5);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;}
+/* iOS pins position:fixed to the layout viewport, so an open software keyboard
+   leaves the bottom nav floating mid-screen. Hide it while the keyboard is up. */
+body.kbd-open .bottom-nav{display:none;}
 .status-bar{position:fixed;top:var(--header-h);left:0;right:0;z-index:99;font-size:13px;padding:5px 14px;display:none;align-items:center;gap:8px;justify-content:center;}
 .status-bar.loading{background:var(--blue);color:#fff;display:flex;}
 .status-bar.saving{background:var(--green);color:#fff;display:flex;}
 .status-bar.error{background:var(--red);color:#fff;display:flex;}
 .status-bar.success{background:var(--green);color:#fff;display:flex;}
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--header-h);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 1rem;padding-top:env(safe-area-inset-top,0px);box-shadow:0 1px 4px rgba(0,0,0,0.08);}
-.logo-wrap{display:flex;align-items:center;gap:11px;min-width:0;}
+.logo-wrap{display:flex;align-items:center;gap:11px;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.logo-wrap:active{opacity:.6;}
 .logo-mark{width:38px;height:38px;flex-shrink:0;display:block;}
 body.dark .logo-mark{background:#fff;border-radius:50%;}
 .logo-title{font-family:Helvetica,Arial,sans-serif;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.3px;line-height:1;white-space:nowrap;}
@@ -34,8 +38,18 @@ body.dark .logo-mark{background:#fff;border-radius:50%;}
 @media(max-width:900px){.logo-sub{white-space:normal;max-width:120px;}}
 @media(max-width:640px){.logo-rule,.logo-sub,.logo-title .lt-ncems{display:none;}.logo-mark{width:32px;height:32px;}.logo-title{font-size:18px;}.logo-wrap{gap:9px;}}
 .header-right{display:flex;align-items:center;gap:6px;}
-.login-status{font-size:12.5px;color:var(--green);display:none;align-items:center;gap:4px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px;}
-@media(max-width:640px){.login-status{max-width:104px;}}
+.user-menu-wrap{position:relative;display:flex;align-items:center;}
+.login-status{font-size:12.5px;color:var(--green);display:flex;align-items:center;gap:4px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:210px;background:none;border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+.login-status:hover{background:var(--surface2);}
+.login-status .um-chev{font-size:13px;color:var(--text3);transition:transform .15s;}
+.login-status[aria-expanded="true"] .um-chev{transform:rotate(180deg);}
+@media(max-width:640px){.login-status{max-width:150px;padding:5px 7px;}}
+.user-menu{display:none;position:absolute;top:calc(100% + 7px);right:0;min-width:178px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 5px 18px var(--shadow);z-index:200;overflow:hidden;}
+.user-menu.open{display:block;}
+.um-item{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;padding:12px 15px;font-size:14.5px;font-family:inherit;color:var(--text);cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent;}
+.um-item:hover{background:var(--surface2);}
+.um-item+.um-item{border-top:1px solid var(--border2);}
+.um-danger{color:var(--red);}
 .page{max-width:740px;margin:0 auto;padding:0 1rem 1rem;padding-top:calc(var(--header-h) + 0.75rem);transition:max-width .15s;}
 body.calwide .page{max-width:1240px;}
 @media(max-width:640px){body.calwide .page{max-width:740px;}}
@@ -54,7 +68,9 @@ body.calwide .page{max-width:1240px;}
   .bnav-admin{display:none;}.bnav-admin.visible{display:flex;}
 }
 .list-switcher{display:flex;margin-bottom:1rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-.lsw-btn{flex:1;background:none;border:none;padding:10px 12px;font-size:14px;cursor:pointer;color:var(--text3);display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;font-family:inherit;-webkit-tap-highlight-color:transparent;}
+.lsw-btn{flex:1;background:none;border:none;padding:8px 10px;font-size:14px;cursor:pointer;color:var(--text3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .15s;font-family:inherit;-webkit-tap-highlight-color:transparent;line-height:1.25;}
+.lsw-main{display:flex;align-items:center;gap:6px;}
+.lsw-sub{font-size:11.5px;opacity:.75;font-weight:400;}
 .lsw-btn:first-child{border-right:1px solid var(--border);}
 .lsw-btn.active-long{background:var(--green);color:#fff;font-weight:500;}
 .lsw-btn.active-short{background:var(--blue);color:#fff;font-weight:500;}
@@ -266,10 +282,6 @@ body.dark .cal-cellhead{background:transparent}
 .loading-screen{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:15px;}
 .refresh-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:.75rem;font-size:13px;color:var(--text3);}
 .dark-toggle{background:none;border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:13px;cursor:pointer;color:var(--text2);display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;}
-.slider-track{position:relative;height:44px;background:var(--red-light);border:1px solid var(--red);border-radius:22px;overflow:hidden;margin-top:16px;}
-.slider-fill{position:absolute;left:0;top:0;bottom:0;background:var(--red);border-radius:22px;width:44px;pointer-events:none;}
-.slider-thumb{position:absolute;left:0;top:2px;bottom:2px;width:40px;background:#fff;border-radius:20px;display:flex;align-items:center;justify-content:center;cursor:grab;box-shadow:0 1px 4px rgba(0,0,0,.2);font-size:16px;user-select:none;touch-action:none;}
-.slider-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--red);pointer-events:none;}
 .pagination{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--border2);background:var(--surface2);flex-wrap:wrap;}
 .pagination-info{font-size:13px;color:var(--text3);flex:1;}
 .per-page-select{font-size:13px;border:1px solid var(--input-border);border-radius:6px;padding:4px 8px;background:var(--input-bg);color:var(--text);}
@@ -361,7 +373,7 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
 <body>
 <div class="status-bar" id="status-bar"></div>
 <header class="app-header">
-  <div class="logo-wrap" id="logo-wrap">
+  <div class="logo-wrap" id="logo-wrap" onclick="goHome()" role="button" tabindex="0" title="Back to the OT List">
     <img class="logo-mark" src="logo-ncems.png" alt="North Country EMS"/>
     <div class="logo-title"><span class="lt-ncems">NCEMS </span><em>Overtime</em></div>
     <div class="logo-rule"></div>
@@ -369,10 +381,14 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
   </div>
   <div class="header-right">
     <button class="dark-toggle" onclick="toggleDark()" id="dark-btn"><i class="ti ti-moon"></i></button>
-    <span class="login-status" id="login-status"></span>
     <button class="btn btn-primary btn-sm" id="login-btn" onclick="openAuthFlow()"><i class="ti ti-lock"></i> Login</button>
-    <button class="btn btn-sm" id="selfpin-btn" onclick="openPinModal({mode:'self'})" style="display:none" title="Change my PIN"><i class="ti ti-key"></i></button>
-    <button class="btn btn-sm" id="logout-btn" onclick="doLogout()" style="display:none"><i class="ti ti-logout"></i></button>
+    <div class="user-menu-wrap" id="user-menu-wrap" style="display:none">
+      <button class="login-status" id="login-status" onclick="toggleUserMenu(event)" aria-haspopup="true" aria-expanded="false"></button>
+      <div class="user-menu" id="user-menu">
+        <button class="um-item" id="um-pin" onclick="userMenuAction('pin')"><i class="ti ti-key"></i> Change PIN</button>
+        <button class="um-item um-danger" onclick="userMenuAction('logout')"><i class="ti ti-logout"></i> Log out</button>
+      </div>
+    </div>
   </div>
 </header>
 <nav class="bottom-nav">
@@ -420,10 +436,9 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
 </div>
 <div class="page" id="app" style="display:none">
   <div class="list-switcher">
-    <button class="lsw-btn active-long" id="btn-long" onclick="switchList('long')"><i class="ti ti-clock"></i> Long Notice</button>
-    <button class="lsw-btn" id="btn-short" onclick="switchList('short')"><i class="ti ti-bolt"></i> Short Notice</button>
+    <button class="lsw-btn active-long" id="btn-long" onclick="switchList('long')"><span class="lsw-main"><i class="ti ti-clock"></i> Long Notice</span><span class="lsw-sub">More than 24 hrs notice</span></button>
+    <button class="lsw-btn" id="btn-short" onclick="switchList('short')"><span class="lsw-main"><i class="ti ti-bolt"></i> Short Notice</span><span class="lsw-sub">12 hrs or less notice</span></button>
   </div>
-  <div id="list-description" style="font-size:13px;color:var(--text3);text-align:center;margin:-0.5rem 0 0.75rem;display:none"></div>
   <div class="refresh-bar"><span id="last-updated"></span><button class="btn btn-muted btn-sm" onclick="refreshData()"><i class="ti ti-refresh"></i> Refresh</button></div>
   <div class="tab-bar">
     <div class="tab-left">
@@ -446,8 +461,7 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
       <span class="log-count" id="log-count"></span>
       <button class="btn btn-muted btn-sm" id="reset-filter-btn" onclick="resetFilters()" style="display:none"><i class="ti ti-x"></i> Reset</button>
       <div id="log-actions-chief" style="display:none;gap:8px;align-items:center">
-        <button class="btn btn-dl btn-sm" onclick="downloadCSV()"><i class="ti ti-download"></i> CSV</button>
-        <button class="btn btn-warn btn-sm" id="archive-btn" onclick="openClearConfirm()" style="display:none"><i class="ti ti-trash"></i> Archive</button>
+        <button class="btn btn-dl btn-sm" onclick="downloadCSV()"><i class="ti ti-download"></i> Download CSV</button>
       </div>
     </div>
     <div class="log-filters">
@@ -607,7 +621,6 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
 <div class="modal-bg" id="action-modal"><div class="modal"><h3 id="modal-title">Record action</h3><div class="field"><label>Offered by</label><div id="modal-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="field" id="am-shifts-wrap"><label>Open shifts — tap to select</label><div id="am-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div><div class="field"><label>Shift date (manual)</label><input type="date" id="modal-date" onclick="try{this.showPicker()}catch(e){}" onchange="amManualDate()"/></div><div class="field" id="reason-field" style="display:none"><label>Reason</label><select id="modal-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="modal-notes"/></div><div class="modal-btns"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-accept" id="modal-confirm-btn" onclick="confirmAction()">Confirm</button></div></div></div>
 <div class="modal-bg" id="pause-modal"><div class="modal"><h3><i class="ti ti-player-pause" style="margin-right:6px"></i>Reason for pausing</h3><div class="field"><label>Reason</label><select id="pause-reason-select"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="pause-notes"/></div><div class="modal-btns"><button class="btn" onclick="closePauseModal()">Cancel</button><button class="btn btn-warn" onclick="confirmPause()"><i class="ti ti-player-pause"></i> Pause</button></div></div></div>
 <div class="modal-bg" id="offering-modal"><div class="modal"><h3><i class="ti ti-phone-calling" style="margin-right:6px"></i>Mark as currently offering</h3><p id="offering-modal-desc"></p><div id="offering-phone-display" style="display:none;background:var(--green-light);border:1px solid var(--green-border);border-radius:6px;padding:8px 12px;margin-bottom:13px;font-size:14px;color:var(--green);align-items:center;gap:8px"><i class="ti ti-phone" style="font-size:16px"></i><span id="offering-phone-number"></span></div><div class="field"><label>Offered by</label><div id="offering-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div id="single-fields"><div class="field"><label>Open shifts — soonest first</label><div id="offer-shift-btns" style="display:flex;flex-direction:column;gap:6px"></div></div></div><div style="margin:12px 0 0"><button type="button" class="btn btn-muted btn-sm" onclick="toggleOfferManual()" style="width:100%;justify-content:center"><i class="ti ti-pencil"></i> Manual entry</button></div><div id="offer-manual" style="display:none;margin-top:10px"><div class="field"><label>Unit</label><select id="offering-unit"></select></div><div class="field" id="manual-date-field"><label>Shift date</label><input type="date" id="offering-date" onclick="try{this.showPicker()}catch(e){}" onchange="offerManualDate()"/></div><p style="font-size:12px;color:var(--text3);margin:0 0 8px">A manual shift is posted to Open Shifts automatically when you offer it.</p></div><div id="core-warning" style="display:none;background:var(--amber-light);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;margin-bottom:12px"><div id="core-warning-text" style="font-size:14px;color:var(--amber);margin-bottom:8px"></div><button class="btn btn-sm" onclick="skipCoreShift()" style="border-color:var(--amber);color:var(--amber)"><i class="ti ti-player-skip-forward"></i> Unavailable — already on shift (not counted as a pass)</button></div><div class="modal-btns"><button class="btn" onclick="closeOfferingModal()">Cancel</button><button class="btn btn-warn" onclick="confirmOffering()"><i class="ti ti-phone-calling"></i> Offer</button></div></div></div>
-<div class="modal-bg" id="confirm-modal"><div class="modal"><h3>Archive and clear log?</h3><p>Download the CSV first. Then slide to confirm — <strong>this cannot be undone.</strong></p><div class="modal-btns" style="justify-content:flex-start;margin-bottom:0"><button class="btn btn-dl" onclick="downloadCSV()"><i class="ti ti-download"></i> Download CSV first</button></div><div class="slider-track" id="slider-track"><div class="slider-fill" id="slider-fill"></div><div class="slider-label" id="slider-label">← Slide to delete log</div><div class="slider-thumb" id="slider-thumb"><i class="ti ti-arrow-right" style="color:var(--red)"></i></div></div><div class="modal-btns"><button class="btn" onclick="closeConfirm()">Cancel</button></div></div></div>
 <div class="modal-bg" id="reorder-modal"><div class="modal"><h3><i class="ti ti-arrows-sort" style="margin-right:6px"></i>Reason for reorder</h3><p>This will be logged for transparency.</p><div class="field"><label>Reason</label><select id="reorder-reason"></select></div><div class="field"><label>Notes (optional)</label><input type="text" id="reorder-notes"/></div><div class="field"><label>Authorized by</label><div id="reorder-officer-name" style="font-size:15px;font-weight:500;color:var(--green);padding:4px 0"></div></div><div class="modal-btns"><button class="btn" onclick="cancelReorder()">Cancel</button><button class="btn btn-primary" onclick="confirmReorder()"><i class="ti ti-check"></i> Save reorder</button></div></div></div>
 <div class="modal-bg" id="row-sheet"><div class="modal" style="padding:1rem"><div style="width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 1rem"></div><div style="font-size:16px;font-weight:500;color:var(--text);margin-bottom:4px;text-align:center" id="sheet-name"></div><div style="font-size:14px;color:var(--text3);text-align:center;margin-bottom:14px" id="sheet-phone"></div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn btn-warn" style="justify-content:center;padding:12px" id="sheet-offer" onclick="sheetOffer()"><i class="ti ti-phone-calling"></i> Offer</button><button class="btn btn-accept" style="justify-content:center;padding:12px" id="sheet-accept" onclick="sheetAccept()"><i class="ti ti-check"></i> Accept</button><button class="btn btn-pass" style="justify-content:center;padding:12px" id="sheet-pass" onclick="sheetPass()"><i class="ti ti-x"></i> Pass</button><button class="btn btn-muted" style="justify-content:center;padding:12px" id="sheet-pause" onclick="sheetPause()"><i class="ti ti-player-pause"></i> <span id="sheet-pause-lbl">Pause</span></button></div><button class="btn btn-muted" style="justify-content:center;padding:10px;margin-top:8px;width:100%" onclick="closeRowSheet()">Cancel</button></div></div>
 <!-- TAKE SHIFT MODAL (view-only) -->
@@ -640,6 +653,22 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
   </div>
 </div>
 <!-- FILL SHIFT MODAL -->
+<div class="modal-bg" id="calshift-modal">
+  <div class="modal">
+    <h3><i class="ti ti-calendar-event" style="margin-right:6px"></i>Open shift</h3>
+    <p id="calshift-desc" style="color:var(--text2)"></p>
+    <div id="calshift-choices" style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+      <button class="btn btn-accept btn-list" style="width:100%;justify-content:center" onclick="calShiftFilled()"><i class="ti ti-check"></i> Mark as filled</button>
+      <button class="btn btn-pass btn-list" style="width:100%;justify-content:center" onclick="calShiftRemoveStep()"><i class="ti ti-trash"></i> Remove shift</button>
+    </div>
+    <div id="calshift-remove" style="display:none;margin-top:16px">
+      <div class="field"><label>Why are you removing it?</label>
+        <select id="calshift-reason"><option value="No longer needed">No longer needed</option><option value="Cancelled">Cancelled</option><option value="Posted in error">Posted in error</option><option value="Covered off-app">Covered off-app</option></select></div>
+      <button class="btn btn-pass btn-list" style="width:100%;justify-content:center" onclick="confirmCalShiftRemove()"><i class="ti ti-trash"></i> Confirm remove</button>
+    </div>
+    <div class="modal-btns"><button class="btn" onclick="closeCalShiftModal()">Cancel</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="fill-shift-modal">
   <div class="modal">
     <h3><i class="ti ti-check" style="margin-right:6px"></i>Mark shift as filled</h3>
@@ -648,6 +677,7 @@ table.ps-table td.ps-num{color:var(--text3);width:26px;}
       <select id="fill-shift-person" onchange="toggleFillOther()"></select>
     </div>
     <div class="field" id="fill-other-field" style="display:none"><label>Name</label><input type="text" id="fill-other-name" placeholder="Enter name..."/></div>
+    <div id="fill-demote-wrap" style="display:none;margin-top:2px"><label style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text2);cursor:pointer"><input type="checkbox" id="fill-no-demote"/> Don't move them on the list</label><p id="fill-demote-note" style="font-size:12.5px;color:var(--text3);margin:5px 0 0"></p></div>
     <div class="modal-btns"><button class="btn" onclick="closeFillShiftModal()">Cancel</button><button class="btn btn-accept" onclick="confirmFillShift()"><i class="ti ti-check"></i> Mark as filled</button></div>
   </div>
 </div>
@@ -679,7 +709,7 @@ const DEFAULT_SMS='Hi {name}, this is {officer} from North Country EMS. We have 
 const DEFAULT_SMS_3RD='Hi {name}, this is {officer} from North Country EMS. We are putting up a 3rd call rig on {date}. Want the shift? Please respond within {limit}.';
 const DEFAULT_SMS_AC='Hi {name}, this is {officer}. We need an Acting Captain on {date}. First to claim it gets it — let me know.';
 const ADMIN_USER='admin';
-const APP_VERSION='6.0';
+const APP_VERSION='6.1';
 function applyVersionLabels(){const f=document.getElementById('app-version-footer');if(f)f.textContent='NCEMS Overtime · v'+APP_VERSION+' · North Country EMS';const rv=document.getElementById('about-version-rv');if(rv)rv.textContent=APP_VERSION;const cr=document.getElementById('about-version-credit');if(cr)cr.textContent='Version '+APP_VERSION+' · 2026 · North Country EMS';}
 document.addEventListener('DOMContentLoaded',applyVersionLabels);
 function showUpdateBar(v){if(document.getElementById('update-bar'))return;const b=document.createElement('div');b.id='update-bar';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:10000;background:var(--green);color:#fff;font-size:14px;padding:9px 14px;text-align:center;cursor:pointer';b.innerHTML='<i class="ti ti-refresh"></i> Version '+esc(v)+' is available — tap to update';b.onclick=async()=>{try{await fetch(location.pathname,{cache:'reload'});}catch(e){}location.reload();};document.body.appendChild(b);}
@@ -788,8 +818,8 @@ function calToggle(ds,unit){
     const off=calOfferingFor(sh.id);
     if(sh.filled){showToast('Filled by '+(sh.filledBy||'?')+' — manage in List view');return;}
     if(off){showToast('Offer in progress for this shift');return;}
-    shared.openShifts.splice(shared.openShifts.indexOf(sh),1);
-    LL().push({name:'— Open shift —',action:'shift',shift:'',shiftDate:ds,supervisor:officerName(),reason:'Removed',notes:unit+' removed via calendar',ts:Date.now()});
+    // A posted shift is never deleted on a single tap any more — ask what happened to it.
+    openCalShiftModal(sh.id);return;
   }else{
     const cougar=unit==='M54'&&isCougarDate(ds);
     shared.openShifts.push({id:'s'+Date.now(),date:ds,unit,type:'24hr',notes:cougar?'Cougar Car':'',priority:false,cougar,filled:false,filledBy:'',filledAt:0,addedBy:officerName(),addedAt:Date.now(),archived:false});
@@ -990,13 +1020,10 @@ function normList(d){if(!d.employees)d.employees=[];if(!d.currentOffering)d.curr
 function normLong(){normList(longData);}function normShort(){normList(shortData);}
 function nextId(){return L().employees.length?Math.max(...L().employees.map(e=>e.id))+1:1;}
 
-async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];savedLogCount={long:longLog.length,short:shortLog.length};extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSlider();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();setShiftsView(localStorage.getItem('ncems_shifts_view')==='list'?'list':'cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
+async function init(){showStatus('Loading data...','loading');try{const[ld,sd,ll,sl]=await Promise.all([fetchBin(LONG_BIN),fetchBin(SHORT_BIN),fetchBin(LONG_LOG),fetchBin(SHORT_LOG)]);longData=ld;shortData=sd;longLog=ll.log||[];shortLog=sl.log||[];savedLogCount={long:longLog.length,short:shortLog.length};extractShared();normLong();normShort();loadAuthUsers();lastUpdated=new Date();updateLastUpdated();document.getElementById('loading-screen').style.display='none';document.getElementById('app').style.display='block';showStatus('Ready','success',1500);applyListUI();applyAuth();renderLog();startOfferTimer();initSwipe();buildPinDisplay();buildPinKeypad();renderOpenShifts();setShiftsView(localStorage.getItem('ncems_shifts_view')==='list'?'list':'cal');applyVersionLabels();}catch(e){document.getElementById('loading-screen').innerHTML='<i class="ti ti-alert-circle" style="font-size:28px;display:block;margin-bottom:10px;color:var(--red)"></i>Could not load data.<br><br><button class="btn btn-primary" onclick="init()" style="margin-top:8px"><i class="ti ti-refresh"></i> Try again</button>';showStatus('Failed to load','error',0);}}
 
 // LIST SWITCHING
-function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();
-  const ld=document.getElementById('list-description');
-  if(ld&&ld.style.display!=='none'){ld.textContent=w==='long'?'For open shifts with more than 24 hours notice':'For sick calls and shifts with 12 hours or less notice';}
-}
+function switchList(w){currentList=w;logPage=1;applyListUI();applyAuth();renderLog();renderOpenShifts();if(document.getElementById('tab-admin').classList.contains('active'))renderAdmin();}
 function applyListUI(){const g=currentList==='long';document.getElementById('btn-long').className='lsw-btn'+(g?' active-long':'');document.getElementById('btn-short').className='lsw-btn'+(!g?' active-short':'');document.documentElement.style.setProperty('--active-accent',g?'var(--green)':'var(--blue)');const l=document.getElementById('editing-list-label');if(l)l.textContent=g?'Long Notice':'Short Notice';document.getElementById('theme-color-meta').setAttribute('content',g?'#2d6a2d':'#1a5a8a');}
 
 // AUTH
@@ -1036,15 +1063,16 @@ function applyAuth(){
   const li=isLoggedIn(),adm=isAdmin();
   if(shiftsView==='cal')renderCalendar();
   document.getElementById('login-btn').style.display=li?'none':'inline-flex';
-  document.getElementById('logout-btn').style.display=li?'inline-flex':'none';
-  const spb=document.getElementById('selfpin-btn');if(spb)spb.style.display=(li&&currentOfficer.name!=='Admin')?'inline-flex':'none';
+  const umw=document.getElementById('user-menu-wrap');
   const ls=document.getElementById('login-status');
-  if(li){ls.style.display='flex';ls.innerHTML=`<i class="ti ti-shield-check"></i> ${esc(currentOfficer.name)}${adm?' <span style="font-size:11.5px;background:var(--green);color:#fff;padding:1px 5px;border-radius:3px;margin-left:3px">ADMIN</span>':''}`;}
-  else ls.style.display='none';
+  if(li){
+    umw.style.display='flex';
+    ls.innerHTML=`<i class="ti ti-shield-check"></i> ${esc(currentOfficer.name)}${adm?' <span style="font-size:11.5px;background:var(--green);color:#fff;padding:1px 5px;border-radius:3px;margin-left:3px">ADMIN</span>':''}<i class="ti ti-chevron-down um-chev"></i>`;
+    const up=document.getElementById('um-pin');if(up)up.style.display=currentOfficer.name!=='Admin'?'flex':'none';
+  }else{umw.style.display='none';closeUserMenu();}
   document.getElementById('admin-tab').style.display=isOfficer()?'inline-block':'none';
   document.getElementById('stats-tab').style.display=isOfficer()?'inline-block':'none';
   const sn=document.getElementById('nav-stats');if(sn)sn.style.display=isOfficer()?'flex':'none';
-  const ab=document.getElementById('archive-btn');if(ab)ab.style.display=isAdmin()?'inline-flex':'none';
   const soa=document.getElementById('shifts-officer-actions');if(soa)soa.style.display=isOfficer()?'inline-flex':'none';
   const ron=document.getElementById('readonly-shifts-notice');if(ron)ron.style.display=li?'none':'flex';
   document.getElementById('readonly-notice').style.display=li?'none':'flex';
@@ -1516,8 +1544,6 @@ function confirmAction(){if(!pendingAction||!isOfficer())return;const idx=L().em
 
 // CSV
 function downloadCSV(){if(!LL().length){showToast('No log entries to download.');return;}const lb=currentList==='long'?'LongNotice':'ShortNotice';const header=['Paramedic','Action','Shift','Shift Date','Offered By','Reason','Notes','Logged At'];const rows=LL().map(l=>[l.name,actionLabel(l.action),l.shift||'',fmtDate(l.shiftDate),l.supervisor||'',l.reason||'',l.notes||'',fmtTs(l.ts)]);const csv=[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');const now=new Date();a.href=url;a.download=`NCEMS_OT_${lb}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}.csv`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);LL().push({name:'— CSV download —',action:'download',shift:'',shiftDate:'',supervisor:officerName(),reason:'',notes:`Downloaded at ${fmtTs(now.getTime())}`,ts:now.getTime()+1});scheduleLogSave();renderLog();}
-function openClearConfirm(){const t=document.getElementById('slider-thumb'),f=document.getElementById('slider-fill'),l=document.getElementById('slider-label');if(t){t.style.left='0px';t.innerHTML='<i class="ti ti-arrow-right" style="color:var(--red)"></i>';}if(f)f.style.width='44px';if(l)l.style.opacity='1';document.getElementById('confirm-modal').classList.add('open');}
-function closeConfirm(){document.getElementById('confirm-modal').classList.remove('open');}
 async function clearLog(){
   const list=currentList;
   if(!isAdmin()){showToast('Admin login required');return;}
@@ -1527,26 +1553,29 @@ async function clearLog(){
   }catch(e){showToast('Network error');return;}
   setLL([]);savedLogCount[list]=0;
   L().employees.forEach(e=>{e.acceptCount=0;e.passCount=0;e.recentPassExpiry=0;e.recentAcceptExpiry=0;e.todayPassCount=0;e.todayPassDate='';});
-  saveActiveList().then(()=>{closeConfirm();renderLog();renderList();showToast('Log cleared');});
+  saveActiveList().then(()=>{renderLog();renderList();showToast('Log cleared');});
 }
 
-// SLIDER
-function initSlider(){const track=document.getElementById('slider-track'),thumb=document.getElementById('slider-thumb'),fill=document.getElementById('slider-fill'),label=document.getElementById('slider-label');if(!track||!thumb)return;let dragging=false,startX=0,currentX=0;function getMax(){return track.offsetWidth-thumb.offsetWidth-4;}function setPos(x){x=Math.max(0,Math.min(x,getMax()));currentX=x;thumb.style.left=x+'px';fill.style.width=(x+thumb.offsetWidth/2)+'px';const pct=x/getMax();label.style.opacity=Math.max(0,1-pct*3);thumb.innerHTML=pct>=0.98?'<i class="ti ti-trash" style="color:var(--red)"></i>':'<i class="ti ti-arrow-right" style="color:var(--red)"></i>';}thumb.addEventListener('mousedown',e=>{dragging=true;startX=e.clientX-currentX;e.preventDefault();});thumb.addEventListener('touchstart',e=>{dragging=true;startX=e.touches[0].clientX-currentX;e.preventDefault();},{passive:false});window.addEventListener('mousemove',e=>{if(!dragging)return;setPos(e.clientX-startX);});window.addEventListener('touchmove',e=>{if(!dragging)return;setPos(e.touches[0].clientX-startX);e.preventDefault();},{passive:false});window.addEventListener('mouseup',()=>{if(!dragging)return;dragging=false;if(currentX/getMax()>=0.98)clearLog();else setPos(0);});window.addEventListener('touchend',()=>{if(!dragging)return;dragging=false;if(currentX/getMax()>=0.98)clearLog();else setPos(0);});}
 
 // TABS
+// Track the software keyboard so fixed furniture can get out of its way.
+(function(){const vv=window.visualViewport;if(!vv)return;let raf=0;
+  function upd(){const kb=(window.innerHeight-vv.height-vv.offsetTop)>110;
+    document.body.classList.toggle('kbd-open',kb);
+    document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.toggle('kopen',kb));}
+  const sched=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;upd();});};
+  vv.addEventListener('resize',sched);vv.addEventListener('scroll',sched);})();
+function toggleUserMenu(ev){if(ev)ev.stopPropagation();const m=document.getElementById('user-menu'),b=document.getElementById('login-status');if(!m)return;const open=m.classList.toggle('open');if(b)b.setAttribute('aria-expanded',open?'true':'false');}
+function closeUserMenu(){const m=document.getElementById('user-menu'),b=document.getElementById('login-status');if(m)m.classList.remove('open');if(b)b.setAttribute('aria-expanded','false');}
+function userMenuAction(a){closeUserMenu();if(a==='pin')openPinModal({mode:'self'});else if(a==='logout')doLogout();}
+document.addEventListener('click',e=>{const w=document.getElementById('user-menu-wrap');if(w&&!w.contains(e.target))closeUserMenu();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeUserMenu();});
+// Tapping the logo goes home to the OT List; tapping it again scrolls to the top.
+function goHome(){const t=document.getElementById('tab-list');if(t&&t.classList.contains('active')){window.scrollTo({top:0,behavior:'smooth'});return;}showTab('list');}
 function showTab(n,ev){document.querySelectorAll('#app .section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.tab,.bnav-item').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');const dt=document.getElementById('tab-btn-'+n);if(dt)dt.classList.add('active');const ni=document.getElementById('nav-'+n);if(ni)ni.classList.add('active');if(ev&&ev.target)ev.target.classList.add('active');if(n==='admin')renderAdmin();if(n==='log'){renderLog();renderShiftFilter();}if(n==='stats')renderStats();
   if(n==='shifts')renderOpenShifts();
   applyCalWide();
-  // Show list description only on OT List tab
-  const ld=document.getElementById('list-description');
-  if(ld){
-    if(n==='list'){
-      ld.style.display='block';
-      ld.textContent=currentList==='long'?'For open shifts with more than 24 hours notice':'For sick calls and shifts with 12 hours or less notice';
-    } else {
-      ld.style.display='none';
-    }
-  }window.scrollTo(0,0);}
+  window.scrollTo(0,0);}
 
 let statsChartInstance=null;
 let selectedStatIdx=null;
@@ -1720,27 +1749,75 @@ function saveNewShift(){
   });
 }
 
+let pendingCalShiftId=null;
+function openCalShiftModal(id){
+  const sh=(shared.openShifts||[]).find(s=>s.id===id);if(!sh)return;
+  pendingCalShiftId=id;
+  document.getElementById('calshift-desc').textContent=dayOfWeek(sh.date)+' '+fmtDate(sh.date)+' \u00b7 '+sh.unit+' \u00b7 '+shiftTypeLabel(sh.type);
+  document.getElementById('calshift-choices').style.display='flex';
+  document.getElementById('calshift-remove').style.display='none';
+  document.getElementById('calshift-modal').classList.add('open');
+}
+function closeCalShiftModal(){document.getElementById('calshift-modal').classList.remove('open');pendingCalShiftId=null;}
+function calShiftFilled(){const id=pendingCalShiftId;closeCalShiftModal();if(id)openFillShiftModal(id);}
+function calShiftRemoveStep(){document.getElementById('calshift-choices').style.display='none';document.getElementById('calshift-remove').style.display='block';}
+function confirmCalShiftRemove(){
+  const sh=(shared.openShifts||[]).find(s=>s.id===pendingCalShiftId);
+  if(!sh){closeCalShiftModal();return;}
+  const reason=document.getElementById('calshift-reason').value;
+  shared.openShifts.splice(shared.openShifts.indexOf(sh),1);
+  LL().push({name:'\u2014 Open shift \u2014',action:'shift',shift:'',shiftDate:sh.date,supervisor:officerName(),reason:'Removed',notes:sh.unit+' removed via calendar \u2014 '+reason,ts:Date.now()});
+  scheduleSharedSave();scheduleLogSave();closeCalShiftModal();
+  renderCalendar();renderOpenShifts();populateOpenShiftDropdown();showToast('Shift removed \u2014 '+reason);
+}
 function openFillShiftModal(btnOrId){const id=typeof btnOrId==='string'?btnOrId:btnOrId.dataset.sid;
   pendingFillShiftId=id;
   const shift=shared.openShifts.find(s=>s.id===id);if(!shift)return;
   document.getElementById('fill-shift-desc').textContent=`${fmtDate(shift.date)} · ${shift.unit} · ${shiftTypeLabel(shift.type)}`;
   const sel=document.getElementById('fill-shift-person');
   const emps=[...new Set([...longData.employees.map(e=>e.name),...shortData.employees.map(e=>e.name)])].sort();
-  sel.innerHTML=emps.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__other__">Part timer / Other...</option>';
+  // Blank first, so a mis-tap cannot log a shift against whoever sorts alphabetically first.
+  sel.innerHTML='<option value="">Select a person...</option>'+emps.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('')+'<option value="__other__">Part timer / Other...</option>';
+  sel.value='';
   document.getElementById('fill-other-field').style.display='none';
   document.getElementById('fill-other-name').value='';
+  const nd=document.getElementById('fill-no-demote');if(nd)nd.checked=false;
+  updateFillDemoteNote();
   document.getElementById('fill-shift-modal').classList.add('open');
 }
 function closeFillShiftModal(){document.getElementById('fill-shift-modal').classList.remove('open');pendingFillShiftId=null;}
-function toggleFillOther(){const v=document.getElementById('fill-shift-person').value;document.getElementById('fill-other-field').style.display=v==='__other__'?'block':'none';}
+function toggleFillOther(){const v=document.getElementById('fill-shift-person').value;document.getElementById('fill-other-field').style.display=v==='__other__'?'block':'none';updateFillDemoteNote();}
+// Only people who are actually on the list you are viewing can be moved on it.
+function updateFillDemoteNote(){
+  const v=(document.getElementById('fill-shift-person')||{}).value||'';
+  const wrap=document.getElementById('fill-demote-wrap'),note=document.getElementById('fill-demote-note');
+  if(!wrap)return;
+  const onList=v&&v!=='__other__'&&L().employees.some(e=>e.name===v);
+  wrap.style.display=onList?'block':'none';
+  if(onList&&note)note.textContent=v.split(' ')[0]+' moves to the bottom of the '+(currentList==='long'?'Long Notice':'Short Notice')+' list, same as an accept.';
+}
 function confirmFillShift(){
   const shift=shared.openShifts.find(s=>s.id===pendingFillShiftId);if(!shift)return;
   let person=document.getElementById('fill-shift-person').value;
+  if(!person){showToast('Please choose who filled it');return;}
   if(person==='__other__'){person=document.getElementById('fill-other-name').value.trim();if(!person){showToast('Please enter a name');return;}}
   shift.filled=true;shift.filledBy=person;shift.filledAt=Date.now();
-  const entry={name:person,action:'accept',shift:'',shiftDate:shift.date,supervisor:officerName(),reason:'',notes:`Filled ${shift.unit} ${shiftTypeLabel(shift.type)} open shift`,ts:Date.now()};
-  longLog.push({...entry});shortLog.push({...entry});
-  saveShared();scheduleLogSave();closeFillShiftModal();renderOpenShifts();populateOpenShiftDropdown();showToast(`Marked as filled by ${person}`);
+  // Filling a shift is filling a shift: same treatment as an accept, on the list
+  // you are currently viewing. Part timers who are on no list simply get recorded.
+  const noDemote=!!(document.getElementById('fill-no-demote')||{}).checked;
+  const idx=L().employees.findIndex(e=>e.name===person);
+  let moved=false;
+  if(idx>=0&&!noDemote){
+    const emp=L().employees[idx];
+    emp.acceptCount=(emp.acceptCount||0)+1;emp.recentPassExpiry=0;emp.recentAcceptExpiry=midnight();
+    const oth=L().employees.filter(e=>e.id!==emp.id&&e.available!==false).map(e=>e.todayPassCount||0);
+    emp.todayPassCount=oth.length?Math.min(...oth):0;emp.todayPassDate=new Date().toDateString();
+    L().employees.splice(idx,1);L().employees.push(emp);moved=true;
+  }
+  // Logged to this list only — an accept in both would double-count the stats.
+  LL().push({name:person,action:'accept',shift:'',shiftDate:shift.date,supervisor:officerName(),reason:'',notes:`Filled ${shift.unit} ${shiftTypeLabel(shift.type)} open shift`+(idx>=0&&noDemote?' — list position left unchanged':''),ts:Date.now()});
+  saveShared();if(moved)scheduleSave();scheduleLogSave();closeFillShiftModal();renderOpenShifts();renderList();populateOpenShiftDropdown();
+  showToast(`Marked as filled by ${person}`+(moved?' — moved to the bottom':''));
 }
 function openTakeShiftModal(btnOrId){const id=typeof btnOrId==='string'?btnOrId:btnOrId.dataset.sid;
   const shift=shared.openShifts.find(s=>s.id===id);if(!shift)return;
@@ -1770,7 +1847,9 @@ function insertTakePlaceholder(t){const ta=document.getElementById('take-sms-tmp
 function saveTakeSmsTemplate(){const v=document.getElementById('take-sms-tmpl').value.trim();if(!v){showToast('Template cannot be empty');return;}shared.takeShiftSms=v;saveShared().then(()=>showToast('Take shift SMS template saved'));}
 function populateTakeSmsTemplate(){const ta=document.getElementById('take-sms-tmpl');if(ta)ta.value=shared.takeShiftSms||'Hi {officer}, I would like to take the {unit} {type} shift on {day} {date}. Please let me know if it is still available.';}
 
-function deleteOpenShift(btnOrId){const id=typeof btnOrId==='string'?btnOrId:btnOrId.dataset.sid;if(!confirm('Remove this open shift?'))return;shared.openShifts=shared.openShifts.filter(s=>s.id!==id);saveShared().then(()=>{renderOpenShifts();populateOpenShiftDropdown();showToast('Shift removed');});}
+// List view used to delete on a confirm() and log nothing at all, so a shift could
+// leave the record without a trace. Same reason picker as the calendar now.
+function deleteOpenShift(btnOrId){const id=typeof btnOrId==='string'?btnOrId:btnOrId.dataset.sid;openCalShiftModal(id);calShiftRemoveStep();}
 
 function showToast(msg){let t=document.getElementById('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText=`position:fixed;bottom:calc(var(--bottom-nav-h) + var(--safe-bottom) + .5rem);left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:7px 16px;border-radius:20px;z-index:9999;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none`;document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},2000);}
 
