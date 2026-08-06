@@ -1,6 +1,7 @@
-// NCEMS OT — Cloudflare Worker storage + auth API (v3.0, app v6.0)
+// NCEMS OT — Cloudflare Worker storage + auth API (v3.1, app v6.2)
 // Bindings: KV = OT_KV, D1 = OT_DB, Secret = AUTH_SECRET (Settings > Variables & Secrets).
-// Public:  GET /bin/{long|short|longlog|shortlog}   GET /auth/users   GET /log/count
+// Public:  GET /bin/{long|short|longlog|shortlog}[?since=&limit=&offset=]   GET /auth/users
+//          GET /log/count   GET /log/stats?list=&since=
 // Auth:    POST /auth/login /adminlogin /changepin /seed (one-time)
 //          POST /auth/setpin /setadmin /renameuser /removeuser (admin token)
 //          POST /log/append (any token)  /log/clear (admin)  /log/migrate (admin, one-time)
@@ -54,12 +55,68 @@ function normalizeEntry(e) {
     ts: Number(e.ts) || Date.now()
   };
 }
-async function readLog(env, list) {
+// v3.1: the log is a permanent record, so the client stops loading all of it.
+// A window is a suffix of history (newest N, or everything since a timestamp) and the
+// total always comes back alongside it so the UI can say "340 of 2,180".
+async function readLog(env, list, opts = {}) {
   await ensureLogSchema(env);
-  const r = await env.OT_DB.prepare(
-    `SELECT name, action, shift, shiftDate, supervisor, reason, notes, ts
-       FROM ot_log WHERE list = ? ORDER BY ts ASC, id ASC`).bind(list).all();
-  return r.results || [];
+  const since = Number.isFinite(opts.since) ? opts.since : null;
+  const limit = Number.isFinite(opts.limit) && opts.limit > 0 ? Math.min(opts.limit, 50000) : null;
+  const offset = Number.isFinite(opts.offset) && opts.offset > 0 ? opts.offset : 0;
+
+  const totalRow = await env.OT_DB.prepare(
+    `SELECT COUNT(*) AS n FROM ot_log WHERE list = ?`).bind(list).first();
+  const total = (totalRow && totalRow.n) || 0;
+
+  let rows;
+  if (since === null && limit === null) {
+    rows = await env.OT_DB.prepare(
+      `SELECT name, action, shift, shiftDate, supervisor, reason, notes, ts
+         FROM ot_log WHERE list = ? ORDER BY ts ASC, id ASC`).bind(list).all();
+  } else if (since !== null) {
+    rows = await env.OT_DB.prepare(
+      `SELECT name, action, shift, shiftDate, supervisor, reason, notes, ts
+         FROM ot_log WHERE list = ? AND ts >= ? ORDER BY ts ASC, id ASC`).bind(list, since).all();
+  } else {
+    // newest `limit` rows, then flipped back to oldest-first so the client's
+    // append-only assumptions (new entries land at the end) still hold
+    rows = await env.OT_DB.prepare(
+      `SELECT name, action, shift, shiftDate, supervisor, reason, notes, ts
+         FROM ot_log WHERE list = ? ORDER BY ts DESC, id DESC LIMIT ? OFFSET ?`).bind(list, limit, offset).all();
+    const r = (rows.results || []).slice().reverse();
+    return { log: r, total, windowed: true };
+  }
+  const out = rows.results || [];
+  return { log: out, total, windowed: out.length < total };
+}
+
+// Per-name, per-action counts computed in D1 so the client never needs the whole log
+// in memory to show a correct number. This is what the stat cards and the Stats tab read.
+async function logStats(env, list, since) {
+  await ensureLogSchema(env);
+  const useSince = Number.isFinite(since) ? since : null;
+  const r = useSince === null
+    ? await env.OT_DB.prepare(
+        `SELECT name, action, COUNT(*) AS n FROM ot_log WHERE list = ? GROUP BY name, action`).bind(list).all()
+    : await env.OT_DB.prepare(
+        `SELECT name, action, COUNT(*) AS n FROM ot_log WHERE list = ? AND ts >= ? GROUP BY name, action`).bind(list, useSince).all();
+  const byName = {}, totals = {};
+  let grand = 0;
+  for (const row of (r.results || [])) {
+    const nm = row.name == null ? '' : row.name;
+    const ac = normalizeAction(row.action);
+    const n = row.n || 0;
+    (byName[nm] = byName[nm] || {})[ac] = (byName[nm][ac] || 0) + n;
+    totals[ac] = (totals[ac] || 0) + n;
+    grand += n;
+  }
+  return { byName, totals, grand };
+}
+
+// Legacy rows still carry the pre-v6.0 vocabulary; fold them so counts do not split.
+function normalizeAction(a) {
+  const v = String(a || '');
+  return v === 'skip' ? 'unavailable' : v;
 }
 async function appendLog(env, list, entries) {
   await ensureLogSchema(env);
@@ -127,6 +184,12 @@ export default {
           `SELECT list, COUNT(*) AS n, MIN(ts) AS oldest, MAX(ts) AS newest FROM ot_log GROUP BY list`).all();
         return J({ ok: true, lists: r.results || [] }, 200, cors);
       }
+      if (op === 'stats' && req.method === 'GET') {
+        const list = url.searchParams.get('list') === 'short' ? 'short' : 'long';
+        const sv = url.searchParams.get('since');
+        const since = sv === null || sv === '' ? NaN : Number(sv);
+        return J({ ok: true, list, ...(await logStats(env, list, since)) }, 200, cors);
+      }
       if (req.method !== 'POST') return J({ error: 'method' }, 405, cors);
       if (req.headers.get('Origin') !== APP_ORIGIN) return J({ error: 'forbidden' }, 403, cors);
       const tk = await verifyToken(env, req.headers.get('Authorization'));
@@ -176,8 +239,10 @@ export default {
 
       if (req.method === 'GET') {
         if (logList) {
-          const log = await readLog(env, logList);
-          return new Response(JSON.stringify({ log }), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+          const num = k => { const v = url.searchParams.get(k); if (v === null || v === '') return NaN; const n = Number(v); return Number.isFinite(n) ? n : NaN; };
+          const r = await readLog(env, logList, { since: num('since'), limit: num('limit'), offset: num('offset') });
+          // shape stays {log:[...]} for older clients; total/windowed are additive
+          return new Response(JSON.stringify(r), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
         }
         const v = await env.OT_KV.get(key);
         return new Response(v === null ? 'null' : v, { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
